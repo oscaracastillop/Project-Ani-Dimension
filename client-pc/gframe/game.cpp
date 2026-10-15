@@ -7,6 +7,7 @@
 #include "image_downloader.h"
 #include "config.h"
 #include "game.h"
+#include "ani_auth_client.h"
 #include "server_lobby.h"
 #include "sound_manager.h"
 #include "image_manager.h"
@@ -240,35 +241,95 @@ void Game::Initialize() {
 	stCompatVersion = env->addStaticText(
 		GetLocalizedCompatVersion().data(),
 		Scale(10, 100, 290, 125), false, true, wVersion);
-	((irr::gui::CGUICustomContextMenu*)mVersion)->addItem(wVersion, -1);
-	//main menu
 	int mainMenuWidth = std::max(280, static_cast<int>(titleWidth / dpi_scale + 15));
 	mainMenuLeftX = 510 - mainMenuWidth / 2;
 	mainMenuRightX = 510 + mainMenuWidth / 2;
-	wMainMenu = env->addWindow(Scale(mainMenuLeftX, 200, mainMenuRightX, 450), false, EDOPRO_VERSION_STRING);
-	wMainMenu->getCloseButton()->setVisible(false);
-	//wMainMenu->setVisible(!is_from_discord);
-#define OFFSET(x1, y1, x2, y2) Scale(10, 30 + offset, mainMenuWidth - 10, 60 + offset)
 	int offset = 0;
-	btnOnlineMode = env->addButton(OFFSET(10, 30, 270, 60), wMainMenu, BUTTON_ONLINE_MULTIPLAYER, gDataManager->GetSysString(2042).data());
-	defaultStrings.emplace_back(btnOnlineMode, 2042);
-	offset += 35;
-	btnLanMode = env->addButton(OFFSET(10, 30, 270, 60), wMainMenu, BUTTON_LAN_MODE, gDataManager->GetSysString(1200).data());
-	defaultStrings.emplace_back(btnLanMode, 1200);
-	offset += 35;
-	btnSingleMode = env->addButton(OFFSET(10, 65, 270, 95), wMainMenu, BUTTON_SINGLE_MODE, gDataManager->GetSysString(1201).data());
-	defaultStrings.emplace_back(btnSingleMode, 1201);
-	offset += 35;
-	btnReplayMode = env->addButton(OFFSET(10, 100, 270, 130), wMainMenu, BUTTON_REPLAY_MODE, gDataManager->GetSysString(1202).data());
-	defaultStrings.emplace_back(btnReplayMode, 1202);
-	offset += 35;
-	btnDeckEdit = env->addButton(OFFSET(10, 135, 270, 165), wMainMenu, BUTTON_DECK_EDIT, gDataManager->GetSysString(1204).data());
-	defaultStrings.emplace_back(btnDeckEdit, 1204);
-	offset += 35;
-	btnModeExit = env->addButton(OFFSET(10, 170, 270, 200), wMainMenu, BUTTON_MODE_EXIT, gDataManager->GetSysString(1210).data());
-	defaultStrings.emplace_back(btnModeExit, 1210);
-	offset += 35;
-#undef OFFSET
+
+	// Main Menu / Lobby elements
+	tBackGround_lobby = driver->getTexture("textures/bg_lobby.jpg");
+	tBtnLobbyNormal = driver->getTexture("textures/btn_lobby_normal.png");
+	tBtnLobbyHover = driver->getTexture("textures/btn_lobby_hover.png");
+	tBtnLobbyExit = driver->getTexture("textures/btn_lobby_exit.png");
+	tDashboardBg = driver->getTexture("textures/dashboard_panel_bg.png");
+
+	wMainMenu = env->addWindow(irr::core::recti(0, 0, window_size.Width, window_size.Height), false, L"");
+	wMainMenu->getCloseButton()->setVisible(false);
+	wMainMenu->setDraggable(false);
+	wMainMenu->setDrawBackground(false);
+	wMainMenu->setDrawTitlebar(false);
+
+	// Separate, elegant buttons on the left
+	btnOnlineMode = env->addButton(Scale(60, 140, 290, 186), wMainMenu, BUTTON_ONLINE_MULTIPLAYER, L"SERVIDORES");
+	btnLanMode = env->addButton(Scale(60, 202, 290, 248), wMainMenu, BUTTON_LAN_MODE, L"LAN + BOT IA");
+	btnSingleMode = env->addButton(Scale(60, 264, 290, 310), wMainMenu, BUTTON_SINGLE_MODE, L"PUZZLES");
+	btnReplayMode = env->addButton(Scale(60, 326, 290, 372), wMainMenu, BUTTON_REPLAY_MODE, L"REPETICIONES");
+	btnDeckEdit = env->addButton(Scale(60, 388, 290, 434), wMainMenu, BUTTON_DECK_EDIT, L"EDITOR DE DECKS");
+	btnModeExit = env->addButton(Scale(60, 450, 290, 496), wMainMenu, BUTTON_MODE_EXIT, L"SALIR DEL JUEGO");
+
+	std::vector<irr::gui::IGUIButton*> lobbyBtns = { btnOnlineMode, btnLanMode, btnSingleMode, btnReplayMode, btnDeckEdit };
+	for (auto* btn : lobbyBtns) {
+		if (!btn) continue;
+		if (tBtnLobbyNormal) btn->setImage(tBtnLobbyNormal);
+		if (tBtnLobbyHover) {
+			btn->setPressedImage(tBtnLobbyHover);
+			btn->setImage(irr::gui::EGBIS_IMAGE_UP_MOUSEOVER, tBtnLobbyHover);
+			btn->setImage(irr::gui::EGBIS_IMAGE_UP_FOCUSED, tBtnLobbyHover);
+		}
+		btn->setScaleImage(true);
+		btn->setUseAlphaChannel(true);
+		btn->setDrawBorder(false);
+		btn->setOverrideColor(irr::video::SColor(255, 230, 245, 255));
+	}
+	if (btnModeExit) {
+		if (tBtnLobbyExit) btnModeExit->setImage(tBtnLobbyExit);
+		if (tBtnLobbyHover) {
+			btnModeExit->setPressedImage(tBtnLobbyHover);
+			btnModeExit->setImage(irr::gui::EGBIS_IMAGE_UP_MOUSEOVER, tBtnLobbyHover);
+		}
+		btnModeExit->setScaleImage(true);
+		btnModeExit->setUseAlphaChannel(true);
+		btnModeExit->setDrawBorder(false);
+		btnModeExit->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
+	}
+
+	// Dashboard Container on the right
+	wDashboard = env->addStaticText(L"", Scale(0, 0, 270, 250), false, false, wMainMenu);
+	imgDashboardBg = env->addImage(Scale(0, 0, 270, 250), wDashboard);
+	if (tDashboardBg) {
+		imgDashboardBg->setImage(tDashboardBg);
+		imgDashboardBg->setScaleImage(true);
+		imgDashboardBg->setUseAlphaChannel(true);
+	}
+
+	stDashboardTitle = env->addStaticText(L"\u2726 ESTADO DE RED \u2726", Scale(15, 12, 255, 36), false, false, wDashboard);
+	stDashboardTitle->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+	stDashboardTitle->setOverrideColor(irr::video::SColor(255, 0, 230, 255));
+
+	stDashboardUser = env->addStaticText(L"Duelista: ---", Scale(20, 48, 250, 70), false, false, wDashboard);
+	stDashboardUser->setOverrideColor(irr::video::SColor(255, 240, 245, 255));
+
+	stDashboardRole = env->addStaticText(L"Rango: Duelista", Scale(20, 74, 250, 96), false, false, wDashboard);
+	stDashboardRole->setOverrideColor(irr::video::SColor(255, 200, 220, 240));
+
+	stDashboardStatus = env->addStaticText(L"Servidor: \u25cf En L\u00ednea", Scale(20, 100, 250, 122), false, false, wDashboard);
+	stDashboardStatus->setOverrideColor(irr::video::SColor(255, 50, 240, 130));
+
+	stDashboardOnline = env->addStaticText(L"Online: 0 duelistas", Scale(20, 128, 250, 150), false, false, wDashboard);
+	stDashboardOnline->setOverrideColor(irr::video::SColor(255, 0, 220, 255));
+
+	stDashboardAccounts = env->addStaticText(L"Cuentas: 0 registradas", Scale(20, 154, 250, 176), false, false, wDashboard);
+	stDashboardAccounts->setOverrideColor(irr::video::SColor(255, 255, 205, 80));
+
+	btnDashboardLogout = env->addButton(Scale(30, 192, 240, 232), wDashboard, BUTTON_DASHBOARD_LOGOUT, L"Cerrar Sesi\u00f3n");
+	if (tBtnLobbyExit) btnDashboardLogout->setImage(tBtnLobbyExit);
+	if (tBtnLobbyHover) btnDashboardLogout->setPressedImage(tBtnLobbyHover);
+	btnDashboardLogout->setScaleImage(true);
+	btnDashboardLogout->setUseAlphaChannel(true);
+	btnDashboardLogout->setDrawBorder(false);
+	btnDashboardLogout->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
+
+	RepositionLobby();
 	//lan mode
 	wLanWindow = env->addWindow(Scale(220, 100, 800, 520), false, gDataManager->GetSysString(1200).data());
 	defaultStrings.emplace_back(wLanWindow, 1200);
@@ -1084,7 +1145,7 @@ void Game::Initialize() {
 
 	env->getRootGUIElement()->bringToFront(wBtnSettings);
 	env->getRootGUIElement()->bringToFront(mTopMenu);
-	env->setFocus(wMainMenu);
+	InitializeLoginPanel();
 }
 
 void Game::LoadCore() {
@@ -2107,7 +2168,13 @@ bool Game::MainLoop() {
 			else
 				discord.UpdatePresence(DiscordWrapper::MENU);
 			gSoundManager->PlayBGM(SoundManager::BGM::MENU, gGameConfig->loopMusic);
-			DrawBackImage(imageManager.tBackGround_menu ? imageManager.tBackGround_menu : imageManager.tBackGround, resized);
+			irr::video::ITexture* menuBg = nullptr;
+			if(loggedUserId > 0 && tBackGround_lobby) {
+				menuBg = tBackGround_lobby;
+			} else {
+				menuBg = imageManager.tBackGround_menu ? imageManager.tBackGround_menu : imageManager.tBackGround;
+			}
+			DrawBackImage(menuBg, resized);
 		}
 		if(current_topdown != gGameConfig->topdown_view || current_keep_aspect_ratio != gGameConfig->keep_aspect_ratio) {
 			if(std::exchange(gGameConfig->topdown_view, current_topdown) != gGameConfig->topdown_view)
@@ -3634,6 +3701,7 @@ void Game::ReloadElementsStrings() {
 }
 void Game::OnResize() {
 	env->getRootGUIElement()->setRelativePosition(irr::core::recti(0, 0, window_size.Width, window_size.Height));
+	RepositionLoginPanel();
 	{
 		const auto waboutcorner = wAbout->getAbsolutePosition().UpperLeftCorner;
 		using std::min;
@@ -3644,7 +3712,7 @@ void Game::OnResize() {
 		stAbout->setRelativePosition(irr::core::recti(10, 10, minwidth, minheight));
 	}
 	wRoomListPlaceholder->setRelativePosition(irr::core::recti(0, 0, window_size.Width, window_size.Height));
-	wMainMenu->setRelativePosition(ResizeWin(mainMenuLeftX, 200, mainMenuRightX, 450));
+	RepositionLobby();
 	wBtnSettings->setRelativePosition(ResizeWin(0, 610, 30, 640));
 	SetCentered(wCommitsLog);
 	SetCentered(updateWindow, false);
@@ -4030,6 +4098,405 @@ void Game::ApplyLocale(size_t index, bool forced) {
 	} else
 		gGameConfig->locale = EPRO_TEXT("en");
 	ReloadElementsStrings();
+}
+
+void Game::InitializeLoginPanel() {
+	wMainMenu->setVisible(false);
+
+	// High-resolution dragons with radiant neon box-shadow auras
+	auto texBlanco = driver->getTexture("textures/dragon_blanco.png");
+	auto texNegro = driver->getTexture("textures/dragon_negro.png");
+	auto texPanelBg = driver->getTexture("textures/login_panel_bg.png");
+	auto texLogo = driver->getTexture("textures/logo_anidimension.png");
+
+	// White Dragon (Left: large imposing guardian with Blue Box-Shadow Aura)
+	if (texBlanco) {
+		imgDragonBlanco = env->addImage(Scale(0, 0, 460, 460), env->getRootGUIElement(), -1, L"");
+		imgDragonBlanco->setImage(texBlanco);
+		imgDragonBlanco->setScaleImage(true);
+		imgDragonBlanco->setUseAlphaChannel(true);
+	}
+
+	// Black Dragon (Right: large imposing guardian with Red Box-Shadow Aura)
+	if (texNegro) {
+		imgDragonNegro = env->addImage(Scale(0, 0, 460, 416), env->getRootGUIElement(), -1, L"");
+		imgDragonNegro->setImage(texNegro);
+		imgDragonNegro->setScaleImage(true);
+		imgDragonNegro->setUseAlphaChannel(true);
+	}
+
+	// Centered Cyber Frosted Glass Background Panel
+	if (texPanelBg) {
+		imgLoginBg = env->addImage(Scale(322, 55, 702, 585), env->getRootGUIElement(), -1, L"");
+		imgLoginBg->setImage(texPanelBg);
+		imgLoginBg->setScaleImage(true);
+		imgLoginBg->setUseAlphaChannel(true);
+	}
+
+	// Borderless / Titleless Interactive Window container
+	wLoginWindow = env->addWindow(Scale(322, 55, 702, 585), false, L"");
+	wLoginWindow->setDrawTitlebar(false);
+	wLoginWindow->setDrawBackground(false);
+	wLoginWindow->getCloseButton()->setVisible(false);
+	wLoginWindow->setDraggable(false);
+
+	// Centered Logo (exact 1.655:1 aspect ratio, clean, razor sharp)
+	if (texLogo) {
+		imgLoginLogo = env->addImage(Scale(68, 16, 312, 164), wLoginWindow, -1, L"");
+		imgLoginLogo->setImage(texLogo);
+		imgLoginLogo->setScaleImage(true);
+		imgLoginLogo->setUseAlphaChannel(true);
+	}
+
+	// Server Status text (glowing cyan / emerald)
+	stServerStatus = env->addStaticText(L"Verificando servidor...", Scale(20, 172, 360, 192), false, false, wLoginWindow);
+	stServerStatus->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+
+	// --- VISTA LOGIN ---
+	stLoginUserLabel = env->addStaticText(L"Usuario o Correo Electr\u00f3nico:", Scale(35, 202, 345, 222), false, false, wLoginWindow);
+	stLoginUserLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	ebLoginUser = env->addEditBox(L"", Scale(35, 224, 345, 256), true, wLoginWindow, EDITBOX_LOGIN_USER);
+
+	stLoginPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(35, 264, 345, 284), false, false, wLoginWindow);
+	stLoginPassLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	ebLoginPassword = env->addEditBox(L"", Scale(35, 286, 345, 318), true, wLoginWindow, EDITBOX_LOGIN_PASSWORD);
+	ebLoginPassword->setPasswordBox(true, L'*');
+
+	btnLoginSubmit = env->addButton(Scale(35, 335, 345, 370), wLoginWindow, BUTTON_LOGIN_SUBMIT, L"INICIAR SESI\u00d3N");
+	btnLoginForce = env->addButton(Scale(35, 375, 345, 405), wLoginWindow, BUTTON_LOGIN_FORCE, L"Cerrar otra sesi\u00f3n e ingresar");
+	btnLoginForce->setVisible(false);
+
+	btnLoginToRegister = env->addButton(Scale(35, 412, 345, 442), wLoginWindow, BUTTON_LOGIN_TO_REGISTER, L"\u00bfNo tienes cuenta? Reg\u00edstrate aqu\u00ed");
+	btnLoginExit = env->addButton(Scale(110, 452, 270, 482), wLoginWindow, BUTTON_LOGIN_EXIT, L"Salir");
+
+	// --- VISTA REGISTRO ---
+	stRegUserLabel = env->addStaticText(L"Nombre de Usuario:", Scale(35, 198, 345, 218), false, false, wLoginWindow);
+	stRegUserLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	ebRegUser = env->addEditBox(L"", Scale(35, 218, 345, 248), true, wLoginWindow, EDITBOX_REG_USER);
+
+	stRegEmailLabel = env->addStaticText(L"Correo Electr\u00f3nico:", Scale(35, 252, 345, 272), false, false, wLoginWindow);
+	stRegEmailLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	ebRegEmail = env->addEditBox(L"", Scale(35, 272, 345, 302), true, wLoginWindow, EDITBOX_REG_EMAIL);
+
+	stRegPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(35, 306, 345, 326), false, false, wLoginWindow);
+	stRegPassLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	ebRegPassword = env->addEditBox(L"", Scale(35, 326, 345, 356), true, wLoginWindow, EDITBOX_REG_PASSWORD);
+	ebRegPassword->setPasswordBox(true, L'*');
+
+	stRegCountryLabel = env->addStaticText(L"Pa\u00eds:", Scale(35, 360, 345, 380), false, false, wLoginWindow);
+	stRegCountryLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
+	cbRegCountry = env->addComboBox(Scale(35, 380, 345, 410), wLoginWindow, COMBOBOX_REG_COUNTRY);
+
+	btnRegSubmit = env->addButton(Scale(35, 418, 345, 450), wLoginWindow, BUTTON_REGISTER_SUBMIT, L"CREAR CUENTA");
+	btnRegToLogin = env->addButton(Scale(35, 456, 345, 486), wLoginWindow, BUTTON_LOGIN_TO_LOGIN, L"\u00bfYa tienes cuenta? Iniciar Sesi\u00f3n");
+
+	// Status feedback text
+	stLoginStatus = env->addStaticText(L"", Scale(15, 490, 365, 524), false, true, wLoginWindow);
+	stLoginStatus->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
+
+	SwitchLoginRegisterView(false);
+	CheckServerStatus();
+	FetchCountries();
+	RepositionLoginPanel();
+}
+
+void Game::RepositionLoginPanel() {
+	if (!wLoginWindow) return;
+
+	irr::s32 screenW = window_size.Width;
+	irr::s32 screenH = window_size.Height;
+	irr::s32 centerX = screenW / 2;
+	irr::s32 centerY = screenH / 2;
+
+	irr::s32 panelW = Scale(380);
+	irr::s32 panelH = Scale(530);
+	irr::s32 panelX = centerX - panelW / 2;
+	irr::s32 panelY = centerY - panelH / 2;
+
+	if (imgLoginBg) {
+		imgLoginBg->setRelativePosition(irr::core::recti(panelX, panelY, panelX + panelW, panelY + panelH));
+	}
+	wLoginWindow->setRelativePosition(irr::core::recti(panelX, panelY, panelX + panelW, panelY + panelH));
+
+	// White Dragon: large imposing guardian (460x460) with Blue Box-Shadow Aura
+	irr::s32 dragonBlancoW = Scale(460);
+	irr::s32 dragonBlancoH = Scale(460);
+	irr::s32 dragonBlancoX = panelX - dragonBlancoW + Scale(45);
+	irr::s32 dragonBlancoY = centerY - dragonBlancoH / 2;
+	if (imgDragonBlanco) {
+		imgDragonBlanco->setRelativePosition(irr::core::recti(dragonBlancoX, dragonBlancoY, dragonBlancoX + dragonBlancoW, dragonBlancoY + dragonBlancoH));
+	}
+
+	// Black Dragon: large imposing guardian (460x416) with Red Box-Shadow Aura
+	irr::s32 dragonNegroW = Scale(460);
+	irr::s32 dragonNegroH = Scale(416);
+	irr::s32 dragonNegroX = panelX + panelW - Scale(45);
+	irr::s32 dragonNegroY = centerY - dragonNegroH / 2;
+	if (imgDragonNegro) {
+		imgDragonNegro->setRelativePosition(irr::core::recti(dragonNegroX, dragonNegroY, dragonNegroX + dragonNegroW, dragonNegroY + dragonNegroH));
+	}
+}
+
+void Game::ShowLoginPanel(bool show) {
+	if (imgLoginBg) imgLoginBg->setVisible(show);
+	if (wLoginWindow) wLoginWindow->setVisible(show);
+	if (imgDragonBlanco) imgDragonBlanco->setVisible(show);
+	if (imgDragonNegro) imgDragonNegro->setVisible(show);
+}
+
+void Game::SwitchLoginRegisterView(bool isRegister) {
+	isRegisterView = isRegister;
+	if (stLoginStatus) stLoginStatus->setText(L"");
+	if (btnLoginForce) btnLoginForce->setVisible(false);
+
+	// Login controls visibility
+	if (stLoginUserLabel) stLoginUserLabel->setVisible(!isRegister);
+	if (ebLoginUser) ebLoginUser->setVisible(!isRegister);
+	if (stLoginPassLabel) stLoginPassLabel->setVisible(!isRegister);
+	if (ebLoginPassword) ebLoginPassword->setVisible(!isRegister);
+	if (btnLoginSubmit) btnLoginSubmit->setVisible(!isRegister);
+	if (btnLoginToRegister) btnLoginToRegister->setVisible(!isRegister);
+	if (btnLoginExit) btnLoginExit->setVisible(!isRegister);
+
+	// Register controls visibility
+	if (stRegUserLabel) stRegUserLabel->setVisible(isRegister);
+	if (ebRegUser) ebRegUser->setVisible(isRegister);
+	if (stRegEmailLabel) stRegEmailLabel->setVisible(isRegister);
+	if (ebRegEmail) ebRegEmail->setVisible(isRegister);
+	if (stRegPassLabel) stRegPassLabel->setVisible(isRegister);
+	if (ebRegPassword) ebRegPassword->setVisible(isRegister);
+	if (stRegCountryLabel) stRegCountryLabel->setVisible(isRegister);
+	if (cbRegCountry) cbRegCountry->setVisible(isRegister);
+	if (btnRegSubmit) btnRegSubmit->setVisible(isRegister);
+	if (btnRegToLogin) btnRegToLogin->setVisible(isRegister);
+}
+
+void Game::CheckServerStatus() {
+	auto res = AniAuthClient::CheckStatus();
+	isServerOnline = res.online;
+	if (stServerStatus) {
+		if (res.online) {
+			std::wstring msg = L"\u25cf Servidor: EN L\u00cdNEA";
+			if (res.totalOnline > 0) {
+				msg += L" | " + std::to_wstring(res.totalOnline) + L" online";
+			}
+			stServerStatus->setText(msg.c_str());
+			stServerStatus->setOverrideColor(irr::video::SColor(255, 0, 240, 180));
+		} else {
+			stServerStatus->setText(L"\u25cf Servidor: DESCONECTADO (Local)");
+			stServerStatus->setOverrideColor(irr::video::SColor(255, 245, 80, 80));
+		}
+	}
+}
+
+void Game::FetchCountries() {
+	if (!cbRegCountry) return;
+	cbRegCountry->clear();
+	countryList.clear();
+
+	auto countries = AniAuthClient::GetCountries();
+	for (const auto& c : countries) {
+		CountryEntry entry;
+		entry.id = c.id;
+		entry.name = c.name;
+		entry.code = c.code;
+		countryList.push_back(entry);
+		std::wstring display = c.name;
+		if (!c.code.empty()) {
+			display += L" (" + std::wstring(c.code.begin(), c.code.end()) + L")";
+		}
+		cbRegCountry->addItem(display.c_str());
+	}
+}
+
+void Game::PerformLogin(bool forceSession) {
+	if (!ebLoginUser || !ebLoginPassword || !stLoginStatus) return;
+	std::wstring user = ebLoginUser->getText();
+	std::wstring pass = ebLoginPassword->getText();
+
+	// Trim whitespace
+	while (!user.empty() && iswspace(user.back())) user.pop_back();
+	while (!user.empty() && iswspace(user.front())) user.erase(user.begin());
+	while (!pass.empty() && iswspace(pass.back())) pass.pop_back();
+	while (!pass.empty() && iswspace(pass.front())) pass.erase(pass.begin());
+
+	if (user.empty() || pass.empty()) {
+		stLoginStatus->setText(L"Por favor ingresa usuario y contrase\u00f1a.");
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 80, 80));
+		return;
+	}
+
+	stLoginStatus->setText(L"Autenticando...");
+	stLoginStatus->setOverrideColor(irr::video::SColor(255, 0, 220, 255));
+
+	auto res = AniAuthClient::Login(user, pass, forceSession);
+	if (res.code == 1) {
+		loggedUserId = res.userId;
+		sessionToken = res.sessionToken;
+		loggedUsername = res.username;
+		loggedEmail = res.email;
+		loggedCountry = res.countryName;
+		loggedRoles = res.roles;
+		isLoggedAdmin = res.isAdmin;
+
+		gGameConfig->nickname = loggedUsername;
+
+		ShowLoginPanel(false);
+		RepositionLobby();
+		UpdateDashboardStats();
+		wMainMenu->setVisible(true);
+		env->getRootGUIElement()->bringToFront(wMainMenu);
+		env->setFocus(wMainMenu);
+	} else if (res.code == 2) {
+		stLoginStatus->setText(L"Esta cuenta ya est\u00e1 activa en otro dispositivo.");
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 190, 60));
+		if (btnLoginForce) btnLoginForce->setVisible(true);
+	} else {
+		stLoginStatus->setText(L"Usuario o contrase\u00f1a incorrectos.");
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 80, 80));
+	}
+}
+
+void Game::PerformRegister() {
+	if (!ebRegUser || !ebRegEmail || !ebRegPassword || !stLoginStatus) return;
+	std::wstring user = ebRegUser->getText();
+	std::wstring email = ebRegEmail->getText();
+	std::wstring pass = ebRegPassword->getText();
+
+	// Trim whitespace
+	while (!user.empty() && iswspace(user.back())) user.pop_back();
+	while (!user.empty() && iswspace(user.front())) user.erase(user.begin());
+	while (!email.empty() && iswspace(email.back())) email.pop_back();
+	while (!email.empty() && iswspace(email.front())) email.erase(email.begin());
+	while (!pass.empty() && iswspace(pass.back())) pass.pop_back();
+	while (!pass.empty() && iswspace(pass.front())) pass.erase(pass.begin());
+
+	if (user.empty() || email.empty() || pass.empty()) {
+		stLoginStatus->setText(L"Todos los campos son obligatorios.");
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 80, 80));
+		return;
+	}
+
+	int selectedIdx = cbRegCountry ? cbRegCountry->getSelected() : -1;
+	int countryId = (selectedIdx >= 0 && selectedIdx < (int)countryList.size()) ? countryList[selectedIdx].id : 24;
+
+	stLoginStatus->setText(L"Creando cuenta...");
+	stLoginStatus->setOverrideColor(irr::video::SColor(255, 0, 220, 255));
+
+	auto res = AniAuthClient::Register(user, email, pass, countryId);
+	if (res.code == 1) {
+		SwitchLoginRegisterView(false);
+		if (ebLoginUser) ebLoginUser->setText(user.c_str());
+		if (ebLoginPassword) ebLoginPassword->setText(L"");
+		stLoginStatus->setText(L"\u00a1Registro exitoso! Ya puedes iniciar sesi\u00f3n.");
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 60, 230, 120));
+	} else {
+		if (res.code == 2) {
+			stLoginStatus->setText(L"El nombre de usuario ya est\u00e1 registrado.");
+		} else if (res.code == 3) {
+			stLoginStatus->setText(L"El correo electr\u00f3nico ya est\u00e1 registrado.");
+		} else if (res.code == 4) {
+			stLoginStatus->setText(L"El usuario y correo no pueden ser id\u00e9nticos.");
+		} else {
+			stLoginStatus->setText(L"Error al registrar usuario.");
+		}
+		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 80, 80));
+	}
+}
+
+void Game::PerformLogout() {
+	AniAuthClient::Logout(loggedUserId, sessionToken);
+	loggedUserId = 0;
+	sessionToken = "";
+	loggedUsername = L"";
+	loggedEmail = L"";
+
+	wMainMenu->setVisible(false);
+	ShowLoginPanel(true);
+	SwitchLoginRegisterView(false);
+	CheckServerStatus();
+}
+
+void Game::RepositionLobby() {
+	if (!wMainMenu) return;
+	wMainMenu->setRelativePosition(irr::core::recti(0, 0, window_size.Width, window_size.Height));
+
+	int btnWidth = Scale(230);
+	int btnHeight = Scale(46);
+	int gap = Scale(14);
+	int totalHeight = 6 * btnHeight + 5 * gap;
+
+	int startX = Scale(60);
+	int startY = (window_size.Height - totalHeight) / 2 + Scale(20);
+	if (startY < Scale(80)) startY = Scale(80);
+
+	if (btnOnlineMode) btnOnlineMode->setRelativePosition(irr::core::recti(startX, startY, startX + btnWidth, startY + btnHeight));
+	if (btnLanMode) btnLanMode->setRelativePosition(irr::core::recti(startX, startY + (btnHeight + gap), startX + btnWidth, startY + 2 * btnHeight + gap));
+	if (btnSingleMode) btnSingleMode->setRelativePosition(irr::core::recti(startX, startY + 2 * (btnHeight + gap), startX + btnWidth, startY + 3 * btnHeight + 2 * gap));
+	if (btnReplayMode) btnReplayMode->setRelativePosition(irr::core::recti(startX, startY + 3 * (btnHeight + gap), startX + btnWidth, startY + 4 * btnHeight + 3 * gap));
+	if (btnDeckEdit) btnDeckEdit->setRelativePosition(irr::core::recti(startX, startY + 4 * (btnHeight + gap), startX + btnWidth, startY + 5 * btnHeight + 4 * gap));
+	if (btnModeExit) btnModeExit->setRelativePosition(irr::core::recti(startX, startY + 5 * (btnHeight + gap), startX + btnWidth, startY + 6 * btnHeight + 5 * gap));
+
+	// Dashboard on the right
+	if (wDashboard) {
+		int dashWidth = Scale(270);
+		int dashHeight = Scale(250);
+		int dashX = window_size.Width - dashWidth - Scale(60);
+		int dashY = startY;
+		wDashboard->setRelativePosition(irr::core::recti(dashX, dashY, dashX + dashWidth, dashY + dashHeight));
+
+		if (imgDashboardBg) imgDashboardBg->setRelativePosition(irr::core::recti(0, 0, dashWidth, dashHeight));
+		if (stDashboardTitle) stDashboardTitle->setRelativePosition(irr::core::recti(Scale(15), Scale(12), dashWidth - Scale(15), Scale(36)));
+		if (stDashboardUser) stDashboardUser->setRelativePosition(irr::core::recti(Scale(20), Scale(48), dashWidth - Scale(20), Scale(70)));
+		if (stDashboardRole) stDashboardRole->setRelativePosition(irr::core::recti(Scale(20), Scale(74), dashWidth - Scale(20), Scale(96)));
+		if (stDashboardStatus) stDashboardStatus->setRelativePosition(irr::core::recti(Scale(20), Scale(100), dashWidth - Scale(20), Scale(122)));
+		if (stDashboardOnline) stDashboardOnline->setRelativePosition(irr::core::recti(Scale(20), Scale(128), dashWidth - Scale(20), Scale(150)));
+		if (stDashboardAccounts) stDashboardAccounts->setRelativePosition(irr::core::recti(Scale(20), Scale(154), dashWidth - Scale(20), Scale(176)));
+		if (btnDashboardLogout) btnDashboardLogout->setRelativePosition(irr::core::recti(Scale(30), Scale(192), dashWidth - Scale(30), Scale(232)));
+	}
+}
+
+void Game::UpdateDashboardStats() {
+	if (!wDashboard || loggedUserId == 0) return;
+	auto status = AniAuthClient::CheckStatus();
+
+	if (stDashboardUser) {
+		std::wstring userText = L"Duelista: " + loggedUsername;
+		stDashboardUser->setText(userText.c_str());
+	}
+	if (stDashboardRole) {
+		std::wstring roleText = L"Rango: ";
+		if (isLoggedAdmin) {
+			roleText += L"Administrador";
+			stDashboardRole->setOverrideColor(irr::video::SColor(255, 255, 80, 80));
+		} else if (!loggedRoles.empty()) {
+			roleText += loggedRoles[0];
+			stDashboardRole->setOverrideColor(irr::video::SColor(255, 240, 180, 50));
+		} else {
+			roleText += L"Duelista";
+			stDashboardRole->setOverrideColor(irr::video::SColor(255, 120, 220, 255));
+		}
+		stDashboardRole->setText(roleText.c_str());
+	}
+	if (stDashboardStatus) {
+		if (status.online) {
+			stDashboardStatus->setText(L"Servidor: \u25cf En L\u00ednea");
+			stDashboardStatus->setOverrideColor(irr::video::SColor(255, 50, 240, 130));
+		} else {
+			stDashboardStatus->setText(L"Servidor: \u25cf Desconectado");
+			stDashboardStatus->setOverrideColor(irr::video::SColor(255, 240, 70, 70));
+		}
+	}
+	if (stDashboardOnline) {
+		std::wstring text = L"Online: " + std::to_wstring(status.totalOnline) + L" duelistas";
+		stDashboardOnline->setText(text.c_str());
+		stDashboardOnline->setOverrideColor(irr::video::SColor(255, 0, 220, 255));
+	}
+	if (stDashboardAccounts) {
+		std::wstring text = L"Cuentas: " + std::to_wstring(status.totalAccounts) + L" registradas";
+		stDashboardAccounts->setText(text.c_str());
+		stDashboardAccounts->setOverrideColor(irr::video::SColor(255, 255, 210, 80));
+	}
 }
 
 }

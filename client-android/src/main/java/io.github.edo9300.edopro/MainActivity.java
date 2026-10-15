@@ -61,7 +61,8 @@ public class MainActivity extends Activity {
 		final var DOCUMENT_URI_ANDROID_DATA = DocumentsContract.buildDocumentUriUsingTree(TREE_URI_PRIMARY_ANDROID, DOCUMENT_ID_PRIMARY_ANDROID_DATA);
 
 		final var EDOPRO_PROVIDER_AUTHORITY = getApplicationContext().getPackageName() + ".document_provider";
-		final var filePath = getExternalFilesDir("EDOPro").getPath();
+		final var extFiles = getExternalFilesDir(null);
+		final var filePath = extFiles != null ? new File(extFiles, "EDOPro").getPath() : new File(getFilesDir(), "EDOPro").getPath();
 		final var EDOPRO_TREE_URI_PRIMARY_ANDROID = DocumentsContract.buildTreeDocumentUri(EDOPRO_PROVIDER_AUTHORITY, filePath);
 		final var EDOPRO_DOCUMENT_URI_ANDROID_DATA = DocumentsContract.buildDocumentUriUsingTree(EDOPRO_TREE_URI_PRIMARY_ANDROID, filePath);
 		final var intents = Arrays.asList(new Intent()
@@ -107,14 +108,6 @@ public class MainActivity extends Activity {
 					showFileManager();
 					return;
 				}
-			}
-		}
-		if (!isTaskRoot()) {
-			if (intent.hasCategory(Intent.CATEGORY_LAUNCHER)
-					&& intent.getAction() != null
-					&& intent.getAction().equals(Intent.ACTION_MAIN)) {
-				finish();
-				return;
 			}
 		}
 		parameter = new ArrayList<>();
@@ -176,23 +169,9 @@ public class MainActivity extends Activity {
 	}
 
 	@Override
-	@SuppressWarnings("SwitchStatementWithTooFewBranches")
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
 										   @NonNull int[] grantResults) {
-		switch (requestCode) {
-			case PERMISSIONS:
-				for (int index = 0; index < permissions.length; index++) {
-					if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
-						// permission not granted - toast and exit
-						Toast.makeText(this, getResources().getString(R.string.not_granted), Toast.LENGTH_LONG).show();
-						finish();
-						return;
-					}
-				}
-				// permission were granted - run
-				getWorkingDirectory();
-				break;
-		}
+		getWorkingDirectory();
 	}
 
 	private static void deleteRecursive(File fileOrDirectory) {
@@ -325,7 +304,7 @@ public class MainActivity extends Activity {
 				 * disable it if that's the case
 				 */
 				WindBot.initAndroid(working_directory + "/WindBot");
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				use_windbot = false;
 			}
 		}
@@ -394,49 +373,19 @@ public class MainActivity extends Activity {
 	public void getDefaultPath() {
 		final File path;
 		if (wantsScopedStorage) {
-			path = new File(getExternalFilesDir("EDOPro").getPath());
+			File ext = getExternalFilesDir(null);
+			if (ext == null) {
+				ext = getFilesDir();
+			}
+			path = new File(ext, "EDOPro");
 		} else {
 			path = new File(Environment.getExternalStorageDirectory() + "/EDOPro");
 		}
-		final String dest_dir = path.getAbsolutePath();
-		if (!dest_dir.isEmpty()) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-				Toast.makeText(this, String.format(getResources().getString(R.string.default_dir), dest_dir), Toast.LENGTH_LONG).show();
-				builder.setMessage(String.format(getResources().getString(R.string.default_dir), dest_dir))
-						.setCancelable(false)
-						.setPositiveButton("OK", (dialog, id) -> {
-							if (!path.exists()) {
-								path.mkdirs();
-							}
-							setWorkingDir(dest_dir);
-						});
-			} else if (!wantsScopedStorage) {
-				builder.setMessage(String.format(getResources().getString(R.string.default_dir_changeable), dest_dir))
-						.setCancelable(false)
-						.setPositiveButton(getResources().getString(R.string.keep_game_folder), (dialog, id) -> {
-							if (!path.exists()) {
-								path.mkdirs();
-							}
-							setWorkingDir(dest_dir);
-						})
-						.setNeutralButton(getResources().getString(R.string.change_game_folder), (dialog, id) -> chooseWorkingDir());
-			} else {
-				if (!path.exists()) {
-					path.mkdirs();
-				}
-				builder.setMessage(String.format(getResources().getString(R.string.separate_data_dir), dest_dir))
-						.setCancelable(false)
-						.setPositiveButton("Yes", (dialog, id) -> {
-							chooseDataDir(dest_dir);
-						})
-						.setNeutralButton("No", (dialog, id) -> {
-							setWorkingDir(dest_dir);
-						});
-			}
-			AlertDialog alert = builder.create();
-			alert.show();
+		if (!path.exists()) {
+			path.mkdirs();
 		}
+		final String dest_dir = path.getAbsolutePath();
+		setWorkingDir(dest_dir);
 	}
 
 	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -550,26 +499,7 @@ public class MainActivity extends Activity {
 			}
 		}
 		copyCertificate();
-		new AlertDialog.Builder(this)
-				.setMessage(getResources().getString(R.string.assets_prompt))
-				.setNegativeButton("No", (dialog, id) -> {
-					try {
-						var file1 = new File(getFilesDir(), "assets_copied");
-						if (!file1.createNewFile()) {
-							Log.e("EDOPro", "error when creating assets_copied file");
-						} else {
-							var wr = (new FileWriter(file1));
-							wr.write("" + BuildConfig.VERSION_CODE);
-							wr.flush();
-						}
-					} catch (Exception e) {
-						Log.e("EDOPro", "error when creating assets_copied file: " + e.getMessage());
-					}
-					next();
-				})
-				.setPositiveButton("Yes", (dialog, id) -> copyAssets(working_dir, false))
-				.setCancelable(false)
-				.show();
+		copyAssets(working_dir, false);
 	}
 
 	public void copyCertificate() {

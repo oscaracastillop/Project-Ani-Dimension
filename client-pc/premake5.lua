@@ -248,7 +248,7 @@ workspace "ygo"
 
 	filter "action:vs*"
 		vectorextensions "SSE2"
-		buildoptions "-wd4996"
+		buildoptions { "-wd4996", "/FS" }
 		defines "_CRT_SECURE_NO_WARNINGS"
 
 	filter "action:not vs*"
@@ -290,9 +290,7 @@ workspace "ygo"
 
 	filter { "configurations:Release", "action:vs* or system:not windows" }
 		if linktimeoptimization then
-			linktimeoptimization "On"
-		else
-			flags "LinkTimeOptimization"
+			linktimeoptimization "Off"
 		end
 
 	filter { "configurations:Release", "architecture:x64" }

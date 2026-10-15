@@ -1080,10 +1080,7 @@ void Game::DrawBackImage(irr::video::ITexture* texture, bool resized) {
 			}
 		}
 	}
-	if(gGameConfig->accurate_bg_resize)
-		imageManager.draw2DImageFilterScaled(texture, dest_size, bg_size);
-	else
-		driver->draw2DImage(texture, dest_size, bg_size);
+	imageManager.draw2DImageFilterScaled(texture, dest_size, bg_size);
 }
 void Game::ShowElement(irr::gui::IGUIElement * win, int autoframe) {
 	FadingUnit fu;

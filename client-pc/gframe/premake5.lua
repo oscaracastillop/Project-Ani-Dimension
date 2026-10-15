@@ -2,6 +2,9 @@ local ygopro_config=function(static_core)
 	kind "WindowedApp"
 	cppdialect "C++17"
 	rtti "Off"
+	filter { "action:vs*" }
+		buildoptions { "/utf-8" }
+	filter {}
 	files { "**.cpp", "**.cc", "**.c", "**.h", "**.hpp" }
 	excludes { "lzma/**", "SoundBackends/**", "sfAudio/**", "Android/**", "OSX/**"  }
 	if _OPTIONS["oldwindows"] then
@@ -260,10 +263,12 @@ local ygopro_config=function(static_core)
 		end
 
 	filter {}
-	if _OPTIONS["prebuilt-core"] then
-		libdirs { _OPTIONS["prebuilt-core"] }
+	if static_core then
+		if _OPTIONS["prebuilt-core"] then
+			libdirs { _OPTIONS["prebuilt-core"] }
+		end
+		links { "ocgcore", "lua" }
 	end
-	links { "ocgcore", "lua" }
 end
 
 include "lzma/."

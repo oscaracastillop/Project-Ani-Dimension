@@ -7,6 +7,7 @@ project "Irrlicht"
 		links "SDL3"
 	filter {}
 	dofile("defines.lua")
+	cppdialect "C++17"
 	exceptionhandling "Off"
 	rtti "Off"
 	files { "**.cpp", "**.c", "**.cxx", "**.hpp", "**.h" }

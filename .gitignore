@@ -1,1 +1,19 @@
+# Dependencies
+node_modules/
 portal/node_modules/
+server/node_modules/
+
+# Android build outputs & IDE caches
+.gradle/
+build/
+client-android/.gradle/
+client-android/build/
+client-android/local.properties
+client-android/.cxx/
+client-android/.externalNativeBuild/
+*.apk
+
+# Temporary files & Logs
+*.log
+client-pc/edopro/ProjectIgnis/replay/*.yrp
+client-pc/edopro/ProjectIgnis/replay/*.yrpX

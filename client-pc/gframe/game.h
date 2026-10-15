@@ -157,6 +157,56 @@ struct info_panel_elements {
 	irr::gui::IGUIButton* btnTabShowSettings;
 };
 
+struct login_panel_elements {
+	irr::gui::IGUIWindow* wLoginWindow{ nullptr };
+	irr::gui::IGUIStaticText* stServerStatus{ nullptr };
+	irr::gui::IGUIImage* imgLoginLogo{ nullptr };
+	irr::gui::IGUIImage* imgLoginBg{ nullptr };
+	irr::gui::IGUIImage* imgDragonBlanco{ nullptr };
+	irr::gui::IGUIImage* imgDragonNegro{ nullptr };
+
+	// Login View
+	irr::gui::IGUIStaticText* stLoginUserLabel{ nullptr };
+	irr::gui::IGUIEditBox* ebLoginUser{ nullptr };
+	irr::gui::IGUIStaticText* stLoginPassLabel{ nullptr };
+	irr::gui::IGUIEditBox* ebLoginPassword{ nullptr };
+	irr::gui::IGUIButton* btnLoginSubmit{ nullptr };
+	irr::gui::IGUIButton* btnLoginToRegister{ nullptr };
+	irr::gui::IGUIButton* btnLoginExit{ nullptr };
+	irr::gui::IGUIButton* btnLoginForce{ nullptr };
+
+	// Register View
+	irr::gui::IGUIStaticText* stRegUserLabel{ nullptr };
+	irr::gui::IGUIEditBox* ebRegUser{ nullptr };
+	irr::gui::IGUIStaticText* stRegEmailLabel{ nullptr };
+	irr::gui::IGUIEditBox* ebRegEmail{ nullptr };
+	irr::gui::IGUIStaticText* stRegPassLabel{ nullptr };
+	irr::gui::IGUIEditBox* ebRegPassword{ nullptr };
+	irr::gui::IGUIStaticText* stRegCountryLabel{ nullptr };
+	irr::gui::IGUIComboBox* cbRegCountry{ nullptr };
+	irr::gui::IGUIButton* btnRegSubmit{ nullptr };
+	irr::gui::IGUIButton* btnRegToLogin{ nullptr };
+
+	irr::gui::IGUIStaticText* stLoginStatus{ nullptr };
+
+	bool isRegisterView{ false };
+	bool isServerOnline{ false };
+	int loggedUserId{ 0 };
+	std::string sessionToken;
+	std::wstring loggedUsername;
+	std::wstring loggedEmail;
+	std::wstring loggedCountry;
+	std::vector<std::wstring> loggedRoles;
+	bool isLoggedAdmin{ false };
+
+	struct CountryEntry {
+		int id;
+		std::wstring name;
+		std::string code;
+	};
+	std::vector<CountryEntry> countryList;
+};
+
 struct main_menu_panel_elements {
 	//main menu
 	int mainMenuLeftX;
@@ -184,6 +234,23 @@ struct main_menu_panel_elements {
 	irr::gui::IGUIButton* btnCommitLogExit;
 	irr::gui::IGUIStaticText* stCommitLog;
 	irr::gui::IGUICheckBox* chkCommitLogExpand;
+
+	// Dashboard & Lobby elements
+	irr::gui::IGUIElement* wDashboard{ nullptr };
+	irr::gui::IGUIImage* imgDashboardBg{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardTitle{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardUser{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardRole{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardStatus{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardOnline{ nullptr };
+	irr::gui::IGUIStaticText* stDashboardAccounts{ nullptr };
+	irr::gui::IGUIButton* btnDashboardLogout{ nullptr };
+
+	irr::video::ITexture* tBackGround_lobby{ nullptr };
+	irr::video::ITexture* tBtnLobbyNormal{ nullptr };
+	irr::video::ITexture* tBtnLobbyHover{ nullptr };
+	irr::video::ITexture* tBtnLobbyExit{ nullptr };
+	irr::video::ITexture* tDashboardBg{ nullptr };
 };
 
 struct lan_panel_elements {
@@ -507,13 +574,24 @@ struct game_field_elements {
 	irr::gui::IGUIButton* btnCancelOrFinish;
 };
 
-class Game final : public info_panel_elements, public main_menu_panel_elements, public lan_panel_elements, public host_creation_panel_elements,
+class Game final : public login_panel_elements, public info_panel_elements, public main_menu_panel_elements, public lan_panel_elements, public host_creation_panel_elements,
 					public host_panel_elements, public replay_panel_elements, public puzzle_panel_elements, public deck_edit_page_elements,
 					public server_lobby_page_elements, public game_field_elements {
 
 public:
 	~Game();
 	void Initialize();
+	void InitializeLoginPanel();
+	void RepositionLoginPanel();
+	void ShowLoginPanel(bool show);
+	void SwitchLoginRegisterView(bool isRegister);
+	void CheckServerStatus();
+	void FetchCountries();
+	void PerformLogin(bool forceSession = false);
+	void PerformRegister();
+	void PerformLogout();
+	void RepositionLobby();
+	void UpdateDashboardStats();
 	void LoadCore();
 #ifdef YGOPRO_BUILD_DLL
 	void LoadCoreFromRepos();

@@ -136,8 +136,37 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
-			case BUTTON_MODE_EXIT: {
+			case BUTTON_LOGIN_SUBMIT: {
+				mainGame->PerformLogin(false);
+				break;
+			}
+			case BUTTON_LOGIN_FORCE: {
+				mainGame->PerformLogin(true);
+				break;
+			}
+			case BUTTON_LOGIN_TO_REGISTER: {
+				mainGame->SwitchLoginRegisterView(true);
+				break;
+			}
+			case BUTTON_LOGIN_TO_LOGIN: {
+				mainGame->SwitchLoginRegisterView(false);
+				break;
+			}
+			case BUTTON_REGISTER_SUBMIT: {
+				mainGame->PerformRegister();
+				break;
+			}
+			case BUTTON_LOGIN_EXIT: {
 				mainGame->device->closeDevice();
+				break;
+			}
+			case BUTTON_MODE_EXIT: {
+				mainGame->PerformLogout();
+				mainGame->device->closeDevice();
+				break;
+			}
+			case BUTTON_DASHBOARD_LOGOUT: {
+				mainGame->PerformLogout();
 				break;
 			}
 			case BUTTON_ONLINE_MULTIPLAYER: {
@@ -164,6 +193,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_JOIN_CANCEL2: {
 				mainGame->HideElement(mainGame->wRoomListPlaceholder);
 				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->UpdateDashboardStats();
 				break;
 			}
 			case BUTTON_ROOMPASSWORD_OK: {
@@ -205,6 +235,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			case BUTTON_JOIN_CANCEL: {
 				mainGame->HideElement(mainGame->wLanWindow);
 				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->UpdateDashboardStats();
 				break;
 			}
 			case BUTTON_LAN_REFRESH: {

@@ -240,7 +240,7 @@ public class AssetCopy extends Activity {
 
 		protected void onPostExecute(String result) {
 			Intent returnIntent = new Intent();
-			setResult(Activity.RESULT_CANCELED, returnIntent);
+			setResult(Activity.RESULT_OK, returnIntent);
 			finish();
 		}
 

@@ -130,7 +130,8 @@ LOCAL_SRC_FILES := $(GFRAME_PATH)/Android/COSAndroidOperator.cpp \
 				   $(GFRAME_PATH)/utils.cpp \
 				   $(GFRAME_PATH)/utils_gui.cpp \
 				   $(GFRAME_PATH)/windbot.cpp \
-				   $(GFRAME_PATH)/windbot_panel.cpp
+				   $(GFRAME_PATH)/windbot_panel.cpp \
+				   $(GFRAME_PATH)/ani_auth_client.cpp
 
 ifneq ($(USE_BUNDLED_FONT),)
 LOCAL_SRC_FILES += $(GFRAME_PATH)/CGUITTFont/bundled_font.cpp

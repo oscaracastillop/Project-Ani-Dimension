@@ -43,6 +43,14 @@
              ],
     "servers":  [
                     {
+                        "name":  "Ani Dimension (LAN Wi-Fi)",
+                        "address":  "172.28.38.45",
+                        "duelport":  7911,
+                        "roomaddress":  "172.28.38.45",
+                        "roomlistprotocol":  "http",
+                        "roomlistport":  7922
+                    },
+                    {
                         "name":  "Ani Dimension V2 (Localhost)",
                         "address":  "127.0.0.1",
                         "duelport":  7911,
