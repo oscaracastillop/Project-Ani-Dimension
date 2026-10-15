@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ani Dimension V2 - Portal Oficial de Duelos</title>
+    <!-- Fuentes de alta gama: Cinzel, Rajdhani, Noto Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Fondo Dinámico con Partículas y Resplandor -->
+    <div class="background-canvas">
+        <div class="stars-layer"></div>
+        <div class="nebula-glow nebula-left"></div>
+        <div class="nebula-glow nebula-right"></div>
+    </div>
+
+    <!-- Barra Superior: Estado del Servidor (Sin IPs) -->
+    <header class="top-nav">
+        <div class="nav-brand">
+            <span class="edition-badge">V2 OFFICIAL</span>
+        </div>
+        <div class="server-status-pill" id="serverStatusBadge">
+            <span class="status-indicator-dot" id="statusDot"></span>
+            <span class="status-text" id="statusLabel">COMPROBANDO SERVIDOR...</span>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal Flanqueado por los Dragones Legendarios -->
+    <main class="main-wrapper">
+        <!-- Dragón Blanco de Ojos Azules (Izquierda) -->
+        <aside class="dragon-side side-left">
+            <div class="dragon-container float-anim-left">
+                <img src="assets/blue_eyes_dragon.png" alt="Blue-Eyes White Dragon" class="dragon-image blue-eyes">
+                <div class="dragon-halo halo-blue"></div>
+                <div class="dragon-tag">DRAGÓN BLANCO DE OJOS AZULES</div>
+            </div>
+        </aside>
+
+        <!-- Centro: Tarjeta Central de Autenticación -->
+        <section class="auth-center-card">
+            <!-- Logo Oficial de Ani Dimension -->
+            <div class="logo-box">
+                <img src="assets/logo.png" alt="Ani Dimension Logo" class="brand-logo">
+            </div>
+
+            <!-- VISTA 1: FORMULARIOS DE AUTENTICACIÓN (LOGIN / REGISTRO) -->
+            <div id="authView" class="auth-view-content">
+                <!-- Selector de Pestañas -->
+                <div class="tab-selector">
+                    <button type="button" class="tab-btn active" id="tabLoginBtn" onclick="switchTab('login')">
+                        INICIAR SESIÓN
+                    </button>
+                    <button type="button" class="tab-btn" id="tabRegisterBtn" onclick="switchTab('register')">
+                        NUEVO REGISTRO
+                    </button>
+                </div>
+
+                <!-- Notificaciones / Mensajes de Error y Éxito -->
+                <div id="alertBanner" class="alert-banner hidden"></div>
+
+                <!-- FORMULARIO DE INICIO DE SESIÓN -->
+                <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="loginUsuario">NOMBRE DE USUARIO</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <input type="text" id="loginUsuario" required placeholder="Tu nombre de duelista" autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="loginPassword">CONTRASEÑA</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                            <input type="password" id="loginPassword" required placeholder="••••••••••••" autocomplete="current-password">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cta-button gold-glow" id="loginSubmitBtn">
+                        <span class="btn-text">ENTRAR AL DUELO</span>
+                        <div class="btn-shimmer"></div>
+                    </button>
+                </form>
+
+                <!-- FORMULARIO DE REGISTRO -->
+                <form id="registerForm" class="auth-form hidden" onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label for="regUsuario">NOMBRE DE USUARIO</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <input type="text" id="regUsuario" required placeholder="Elige tu nombre público" minlength="3" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="regEmail">CORREO ELECTRÓNICO</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                            <input type="email" id="regEmail" required placeholder="correo@ejemplo.com">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="regPassword">CONTRASEÑA</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                            </svg>
+                            <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres" minlength="6">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="regPais">CATÁLOGO DEL PAÍS</label>
+                        <div class="input-field-wrap">
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                            </svg>
+                            <select id="regPais" required>
+                                <option value="" disabled selected>Selecciona tu país...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cta-button cyan-glow" id="registerSubmitBtn">
+                        <span class="btn-text">REGISTRAR CUENTA</span>
+                        <div class="btn-shimmer"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- VISTA 2: PANEL DE DUELISTA (POST-LOGIN) -->
+            <div id="dashboardView" class="dashboard-view-content hidden">
+                <div class="user-greeting">
+                    <div class="avatar-badge">
+                        <span id="userInitial">D</span>
+                    </div>
+                    <div class="user-info">
+                        <h2 id="userNameLabel">DUELISTA</h2>
+                        <div class="user-stats-row">
+                            <span class="stat-item"><strong id="userLevel">LVL 1</strong></span>
+                            <span class="stat-divider">|</span>
+                            <span class="stat-item"><span class="icon-gold">🪙</span> <span id="userGold">1,000</span></span>
+                            <span class="stat-divider">|</span>
+                            <span class="stat-item"><span class="icon-gem">💎</span> <span id="userGems">100</span></span>
+                            <span class="stat-divider">|</span>
+                            <span class="stat-item" id="userCountry">🏳️ PAÍS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta del Cliente EDOPro / Project Ignis -->
+                <div class="game-launcher-card">
+                    <div class="launcher-header">
+                        <div class="ignis-badge">PROJECT IGNIS V2</div>
+                        <h3>MOTOR DE DUELOS REGLAMENTARIO</h3>
+                        <p>Cliente gráfico de escritorio conectado a la red de duelos local.</p>
+                    </div>
+
+                    <div class="launcher-features">
+                        <div class="feature-chip">⚔️ 22,800+ Cartas y Efectos</div>
+                        <div class="feature-chip">🤖 Duelos vs WindBot IA</div>
+                        <div class="feature-chip">🛡️ Conexión Única Segura</div>
+                    </div>
+
+                    <button type="button" class="cta-button gold-glow launch-btn" onclick="launchGame()">
+                        <span class="btn-text">⚔️ ABRIR PROJECT IGNIS (EDOPRO) ⚔️</span>
+                        <div class="btn-shimmer"></div>
+                    </button>
+                </div>
+
+                <div class="dashboard-footer">
+                    <button type="button" class="logout-btn" onclick="handleLogout()">
+                        CERRAR SESIÓN
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dragón Negro de Ojos Rojos (Derecha) -->
+        <aside class="dragon-side side-right">
+            <div class="dragon-container float-anim-right">
+                <img src="assets/red_eyes_dragon.png" alt="Red-Eyes Black Dragon" class="dragon-image red-eyes">
+                <div class="dragon-halo halo-red"></div>
+                <div class="dragon-tag">DRAGÓN NEGRO DE OJOS ROJOS</div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

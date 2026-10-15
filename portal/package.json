@@ -1,0 +1,14 @@
+﻿{
+  "name": "ani-dimension-v2-portal",
+  "version": "2.0.0",
+  "description": "Ani Dimension V2 - Official Login and Platform Portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "mssql": "^11.0.1"
+  }
+}
