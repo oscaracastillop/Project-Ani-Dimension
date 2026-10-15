@@ -3,8 +3,6 @@ libs/
 obj/
 release/
 bugreports/
-src/main/assets/**
-|src/main/assets/cacert.pem
 .gradle/
 .id*/
 *vs/
@@ -13,3 +11,13 @@ local.properties
 *.directory
 .DS_Store
 bundled_font.cpp
+
+# Assets: ignore heavy card pics/scripts by default, but track configs, textures, and lists
+src/main/assets/**
+!src/main/assets/filelist.txt
+!src/main/assets/index.txt
+!src/main/assets/cacert.pem
+!src/main/assets/defaults/config/
+!src/main/assets/defaults/config/**
+!src/main/assets/defaults/textures/
+!src/main/assets/defaults/textures/**

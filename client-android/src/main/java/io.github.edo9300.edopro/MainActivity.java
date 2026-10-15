@@ -478,7 +478,11 @@ public class MainActivity extends Activity {
 	public void copyAssetsPrompt(final String working_dir) {
 		changelog = false;
 		var file = new File(getFilesDir(), "assets_copied");
-		if (file.exists()) {
+		var cover1 = new File(working_dir, "textures/cover.jpg");
+		var cover2 = new File(working_dir, "textures/cover.png");
+		boolean texturesExist = cover1.exists() || cover2.exists();
+
+		if (file.exists() && texturesExist) {
 			try {
 				var fileReader = new BufferedReader(new FileReader(file));
 				var line = fileReader.readLine();
@@ -489,7 +493,7 @@ public class MainActivity extends Activity {
 						//creates the empty assets_copied file
 						new PrintWriter(file).close();
 						Toast.makeText(this, getResources().getString(R.string.copying_update), Toast.LENGTH_LONG).show();
-						copyAssets(working_dir, true);
+						copyAssets(working_dir, false);
 					} catch (Exception ignored) {
 					}
 				} else

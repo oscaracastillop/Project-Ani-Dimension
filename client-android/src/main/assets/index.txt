@@ -1,0 +1,106 @@
+config
+config/languages
+config/languages/Deutsch
+config/languages/Español
+config/languages/Français
+config/languages/Italiano
+config/languages/Português
+deck
+expansions
+fonts
+notices
+pics
+pics/cover
+pics/field
+pics/temp
+puzzles
+puzzles/Canon collection
+puzzles/Canon collection/.git
+puzzles/Canon collection/.git/hooks
+puzzles/Canon collection/.git/info
+puzzles/Canon collection/.git/logs
+puzzles/Canon collection/.git/logs/refs
+puzzles/Canon collection/.git/logs/refs/heads
+puzzles/Canon collection/.git/logs/refs/remotes
+puzzles/Canon collection/.git/logs/refs/remotes/origin
+puzzles/Canon collection/.git/objects
+puzzles/Canon collection/.git/objects/info
+puzzles/Canon collection/.git/objects/pack
+puzzles/Canon collection/.git/refs
+puzzles/Canon collection/.git/refs/heads
+puzzles/Canon collection/.git/refs/remotes
+puzzles/Canon collection/.git/refs/remotes/origin
+puzzles/Canon collection/.git/refs/tags
+puzzles/Canon collection/Duel Links
+puzzles/Canon collection/GX Spirit Caller
+puzzles/Canon collection/GX Spirit Caller/1_Beginner
+puzzles/Canon collection/GX Spirit Caller/2_Intermediate
+puzzles/Canon collection/GX Spirit Caller/3_Advanced
+puzzles/Canon collection/Miscellaneous
+puzzles/Canon collection/Nightmare Troubadour
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/01 Starter Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/02 Astonishing Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/03 3-Type Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/04 Super Illusion Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/05 Maximum Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/06 Fateful Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/07 Duel Best Bout 1
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/08 Duel Best Bout 2
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/09 Duel Best Bout 3
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/10 Dynamic Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/11 Transcendental Maximum Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/12 Fierce Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/13 Transcendental Fusion Duel Q
+puzzles/Canon collection/RUSH DUEL Dawn of the Battle Royale!!/XX Extra
+puzzles/Canon collection/Tutorials
+puzzles/Canon collection/World Championship
+script
+script/goat
+script/official
+script/pre-errata
+script/rush
+script/skill
+script/unofficial
+skin
+skin/Burning
+skin/Burning/textures
+skin/Dark Blue
+skin/Dark Blue/textures
+skin/Dark Green
+skin/Dark Green/textures
+skin/Dark Red
+skin/Dark Red/textures
+skin/Grey
+skin/Grey/textures
+skin/Indigo
+skin/Indigo/textures
+skin/Purple - Obsessed
+skin/Purple - Obsessed/textures
+skin/Red
+skin/Red/textures
+skin/Translucent
+skin/Translucent/textures
+skin/White
+skin/White/textures
+skin/Windows classic
+skin/Windows metallic
+skin/Windows metallic/textures
+sound
+sound/activate
+sound/attack
+sound/BGM
+sound/BGM/advantage
+sound/BGM/deck
+sound/BGM/disadvantage
+sound/BGM/duel
+sound/BGM/lose
+sound/BGM/menu
+sound/BGM/win
+sound/summon
+textures
+textures/roombrowser
+WindBot
+WindBot/Decks
+WindBot/Dialogs
+WindBot/Executors
