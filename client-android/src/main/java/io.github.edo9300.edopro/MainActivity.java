@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -294,6 +295,7 @@ public class MainActivity extends Activity {
 	}
 
 	public void next() {
+		ensureEssentialAssets(working_directory);
 		var use_windbot = true;
 		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
 			use_windbot = false;
@@ -527,6 +529,68 @@ public class MainActivity extends Activity {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void ensureEssentialAssets(String working_dir) {
+		if (working_dir == null || working_dir.isEmpty()) return;
+		try {
+			File texturesDir = new File(working_dir, "textures");
+			if (!texturesDir.exists()) texturesDir.mkdirs();
+
+			String[] assetFolders = new String[]{"defaults/textures", "textures"};
+			for (String folder : assetFolders) {
+				try {
+					String[] list = getAssets().list(folder);
+					if (list != null) {
+						for (String file : list) {
+							File destFile = new File(texturesDir, file);
+							if (!destFile.exists() || destFile.length() == 0) {
+								try (InputStream in = getAssets().open(folder + "/" + file);
+									 FileOutputStream out = new FileOutputStream(destFile)) {
+									byte[] buffer = new byte[8192];
+									int read;
+									while ((read = in.read(buffer)) != -1) {
+										out.write(buffer, 0, read);
+									}
+									out.flush();
+								} catch (Exception ignored) {
+								}
+							}
+						}
+					}
+				} catch (Exception ignored) {
+				}
+			}
+
+			File configDir = new File(working_dir, "config");
+			if (!configDir.exists()) configDir.mkdirs();
+			String[] configFolders = new String[]{"defaults/config", "config"};
+			for (String folder : configFolders) {
+				try {
+					String[] list = getAssets().list(folder);
+					if (list != null) {
+						for (String file : list) {
+							File destFile = new File(configDir, file);
+							if (!destFile.exists() || destFile.length() == 0) {
+								try (InputStream in = getAssets().open(folder + "/" + file);
+									 FileOutputStream out = new FileOutputStream(destFile)) {
+									byte[] buffer = new byte[8192];
+									int read;
+									while ((read = in.read(buffer)) != -1) {
+										out.write(buffer, 0, read);
+									}
+									out.flush();
+								} catch (Exception ignored) {
+								}
+							}
+						}
+					}
+				} catch (Exception ignored) {
+				}
+			}
+		} catch (Exception e) {
+			Log.e("EDOPro", "Error ensuring essential assets: " + e.getMessage());
 		}
 	}
 

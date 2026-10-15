@@ -92,6 +92,12 @@ EXPORT jboolean JNICALL Java_io_github_edo9300_edopro_AssetCopy_copyAssetToDesti
 		return JNI_FALSE;
 	}
 	AAsset* asset = AAssetManager_open(AAssetManager_fromJava(env, assetManager), source_asset, AASSET_MODE_STREAMING);
+	if(!asset) {
+		LOGE("AAssetManager_open failed open asset: %s\n", source_asset);
+		free(source_asset);
+		free(out_filename);
+		return JNI_FALSE;
+	}
 	free(source_asset);
 	FILE* out = fopen(out_filename, "wb");
 	if(out == NULL) {

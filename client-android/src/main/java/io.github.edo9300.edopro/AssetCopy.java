@@ -138,7 +138,12 @@ public class AssetCopy extends Activity {
 				String filename = m_tocopy.get(i);
 				String full_source_filename = isUpdate ? "update/" + filename : "defaults/" + filename;
 				publishProgress(i);
-				if (copyAsset(full_source_filename, workingDir + "/" + filename))
+				java.io.File destFile = new java.io.File(workingDir, filename);
+				java.io.File parent = destFile.getParentFile();
+				if (parent != null && !parent.exists()) {
+					parent.mkdirs();
+				}
+				if (copyAsset(full_source_filename, destFile.getAbsolutePath()))
 					Log.v("AssetCopy", "Copied file: " + m_tocopy.get(i));
 				else
 					Log.e("AssetCopy", "Copying file: " + m_tocopy.get(i));
