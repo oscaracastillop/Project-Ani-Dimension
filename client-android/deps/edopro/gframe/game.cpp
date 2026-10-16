@@ -2889,6 +2889,24 @@ void Game::LoadServers() {
 							tmp_server.protocol = ServerInfo::GetProtocol(protocolIt->get_ref<std::string&>());
 						}
 					}
+					// Eradicate non-Ani Dimension servers (e.g. ProjectIgnis / ygopro foreign servers)
+					if(tmp_server.address.find("projectignis.org") != std::string::npos ||
+					   tmp_server.address.find("ygopro.cn") != std::string::npos ||
+					   tmp_server.roomaddress.find("projectignis.org") != std::string::npos ||
+					   tmp_server.roomaddress.find("ygopro.cn") != std::string::npos) {
+						continue;
+					}
+					// Prevent duplicates
+					bool duplicate = false;
+					for(const auto& s : ServerLobby::serversVector) {
+						if(s.address == tmp_server.address && s.duelport == tmp_server.duelport) {
+							duplicate = true;
+							break;
+						}
+					}
+					if(duplicate)
+						continue;
+
 					int i = serverChoice->addItem(tmp_server.name.data());
 					if(gGameConfig->lastServer == tmp_server.name)
 						serverChoice->setSelected(i);
@@ -2899,6 +2917,9 @@ void Game::LoadServers() {
 				}
 			}
 		}
+	}
+	if(serverChoice->getItemCount() > 0 && serverChoice->getSelected() < 0) {
+		serverChoice->setSelected(0);
 	}
 }
 void Game::ShowCardInfo(uint32_t code, bool resize, imgType type) {

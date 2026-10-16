@@ -168,7 +168,11 @@ void ServerLobby::FillOnlineRooms() {
 void ServerLobby::GetRoomsThread() {
 	Utils::SetThreadName("RoomlistFetch");
 	auto selected = mainGame->serverChoice->getSelected();
-	if (selected < 0) return;
+	if (selected < 0 && !serversVector.empty()) {
+		selected = 0;
+		mainGame->serverChoice->setSelected(0);
+	}
+	if (selected < 0 || selected >= (int)serversVector.size()) return;
 	const auto& serverInfo = serversVector[selected];
 
 	mainGame->btnLanRefresh2->setEnabled(false);
@@ -275,7 +279,11 @@ bool ServerLobby::HasRefreshedRooms() {
 void ServerLobby::JoinServer(bool host) {
 	mainGame->ebNickName->setText(mainGame->ebNickNameOnline->getText());
 	auto selected = mainGame->serverChoice->getSelected();
-	if (selected < 0) return;
+	if (selected < 0 && !serversVector.empty()) {
+		selected = 0;
+		mainGame->serverChoice->setSelected(0);
+	}
+	if (selected < 0 || selected >= (int)serversVector.size()) return;
 	const auto& serverinfo = serversVector[selected].Resolved();
 	if(serverinfo.address.family == epro::Address::UNK)
 		return;

@@ -230,8 +230,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if (mainGame->ebNickNameOnline && !mainGame->loggedUsername.empty()) {
 					mainGame->ebNickNameOnline->setText(mainGame->loggedUsername.c_str());
 				}
+				if (mainGame->serverChoice && mainGame->serverChoice->getItemCount() > 0 && mainGame->serverChoice->getSelected() < 0) {
+					mainGame->serverChoice->setSelected(0);
+				}
 				mainGame->HideElement(mainGame->wDuelsWindow);
 				mainGame->ShowElement(mainGame->wRoomListPlaceholder);
+				ServerLobby::RefreshRooms();
 				break;
 			}
 			case BUTTON_CARD_DUEL_BOT: {
@@ -322,8 +326,15 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_ONLINE_MULTIPLAYER: {
 				mainGame->isHostingOnline = true;
+				if (mainGame->ebNickNameOnline && !mainGame->loggedUsername.empty()) {
+					mainGame->ebNickNameOnline->setText(mainGame->loggedUsername.c_str());
+				}
+				if (mainGame->serverChoice && mainGame->serverChoice->getItemCount() > 0 && mainGame->serverChoice->getSelected() < 0) {
+					mainGame->serverChoice->setSelected(0);
+				}
 				mainGame->HideElement(mainGame->wMainMenu);
 				mainGame->ShowElement(mainGame->wRoomListPlaceholder);
+				ServerLobby::RefreshRooms();
 				break;
 			}
 			case BUTTON_LAN_REFRESH2: {
