@@ -145,6 +145,12 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			break;
 		}
+		case irr::gui::EGET_ELEMENT_FOCUSED: {
+			if (event.GUIEvent.Caller && event.GUIEvent.Caller->getType() == irr::gui::EGUIET_BUTTON) {
+				mainGame->env->removeFocus(event.GUIEvent.Caller);
+			}
+			break;
+		}
 		case irr::gui::EGET_ELEMENT_HOVERED: {
 			// Set cursor to an I-Beam if hovering over an edit box
 			if (event.GUIEvent.Caller->getType() == irr::gui::EGUIET_EDIT_BOX && event.GUIEvent.Caller->isEnabled())
@@ -162,8 +168,50 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::gui::EGET_BUTTON_CLICKED: {
+			if (event.GUIEvent.Caller) mainGame->env->removeFocus(event.GUIEvent.Caller);
 			switch(id) {
+			case BUTTON_LOBBY_DUELS: {
+				mainGame->SwitchMainView(VIEW_DUELS);
+				break;
+			}
+			case BUTTON_LOBBY_DECK:
+			case BUTTON_LOBBY_CATALOG: {
+				mainGame->HideElement(mainGame->wMainMenu);
+				mainGame->wDeckEdit->setVisible(true);
+				break;
+			}
+			case BUTTON_LOBBY_SHOP: {
+				mainGame->SwitchMainView(VIEW_SHOP);
+				break;
+			}
+			case BUTTON_LOBBY_REPLAY: {
+				mainGame->PopupElement(mainGame->wReplay);
+				break;
+			}
+			case BUTTON_LOBBY_EVENTS: {
+				mainGame->SwitchMainView(VIEW_EVENTS);
+				break;
+			}
+			case BUTTON_LOBBY_RANKING: {
+				mainGame->SwitchMainView(VIEW_RANKING);
+				break;
+			}
+			case BUTTON_LOBBY_PROFILE: {
+				mainGame->SwitchMainView(VIEW_PROFILE);
+				break;
+			}
+			case BUTTON_LOBBY_LOGOUT: {
+				mainGame->PerformLogout();
+				break;
+			}
+			case BUTTON_RETURN_TO_LOBBY: {
+				mainGame->SwitchMainView(VIEW_LOBBY);
+				break;
+			}
 			case BUTTON_CARD_DUEL_ONLINE: {
+				if (mainGame->ebJoinHost) mainGame->ebJoinHost->setText(L"172.28.38.45");
+				if (mainGame->ebJoinPort) mainGame->ebJoinPort->setText(L"7911");
+				if (mainGame->ebNickName && !mainGame->loggedUsername.empty()) mainGame->ebNickName->setText(mainGame->loggedUsername.c_str());
 				mainGame->PopupElement(mainGame->wLanWindow);
 				break;
 			}

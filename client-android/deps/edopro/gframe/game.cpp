@@ -190,6 +190,15 @@ void Game::Initialize() {
 	chkCommitLogExpand = env->addCheckBox(false, Scale(295, 435, 500, 460), wCommitsLog, BUTTON_REPO_CHANGELOG_EXPAND, gDataManager->GetSysString(1447).data());
 	defaultStrings.emplace_back(chkCommitLogExpand, 1447);
 	mTopMenu = irr::gui::CGUICustomMenu::addCustomMenu(env);
+	mTopMenu->setVisible(false);
+	wTopBarMarquee = env->addStaticText(L"", irr::core::recti(0, 0, window_size.Width, Scale(28)), false, false);
+	wTopBarMarquee->setBackgroundColor(irr::video::SColor(245, 12, 16, 28));
+	wTopBarMarquee->setVisible(false);
+	stMarqueeText = env->addStaticText(L"✦  BIENVENIDOS A ANI-DIMENSION  ✦  SERVIDOR OFICIAL EN LÍNEA (172.28.38.45:7911)  ✦  CONÉCTATE, ARMA TU DECK Y DEMUESTRA TU PODER  ✦", irr::core::recti(window_size.Width, Scale(4), window_size.Width + Scale(1500), Scale(24)), false, false, wTopBarMarquee);
+	stMarqueeText->setOverrideColor(irr::video::SColor(255, 230, 245, 255));
+	stMarqueeText->setWordWrap(false);
+	marqueeX = (float)window_size.Width;
+
 	mTopMenu->addItem(L"  Lobby  ", MENU_TOP_LOBBY, true, false);
 	mTopMenu->addItem(L"  Duelos  ", MENU_TOP_DUELS, true, false);
 	mTopMenu->addItem(L"  Eventos  ", MENU_TOP_EVENTS, true, false);
@@ -264,16 +273,31 @@ void Game::Initialize() {
 	wMainMenu->setDrawBackground(false);
 	wMainMenu->setDrawTitlebar(false);
 
-	// Separate, elegant buttons on the left
-	btnOnlineMode = env->addButton(Scale(60, 140, 290, 186), wMainMenu, BUTTON_ONLINE_MULTIPLAYER, L"SERVIDORES");
-	btnLanMode = env->addButton(Scale(60, 202, 290, 248), wMainMenu, BUTTON_LAN_MODE, L"LAN + BOT IA");
-	btnSingleMode = env->addButton(Scale(60, 264, 290, 310), wMainMenu, BUTTON_SINGLE_MODE, L"PUZZLES");
-	btnReplayMode = env->addButton(Scale(60, 326, 290, 372), wMainMenu, BUTTON_REPLAY_MODE, L"REPETICIONES");
-	btnDeckEdit = env->addButton(Scale(60, 388, 290, 434), wMainMenu, BUTTON_DECK_EDIT, L"EDITOR DE DECKS");
-	btnModeExit = env->addButton(Scale(60, 450, 290, 496), wMainMenu, BUTTON_MODE_EXIT, L"SALIR DEL JUEGO");
+	// 9 Modular Lobby Buttons
+	btnLobbyDuels = env->addButton(Scale(60, 140, 260, 184), wMainMenu, BUTTON_LOBBY_DUELS, L"⚔  DUELOS");
+	btnLobbyDeck = env->addButton(Scale(60, 196, 260, 240), wMainMenu, BUTTON_LOBBY_DECK, L"🃏  EDITOR DE DECKS");
+	btnLobbyCatalog = env->addButton(Scale(60, 252, 260, 296), wMainMenu, BUTTON_LOBBY_CATALOG, L"📖  CATÁLOGO CARTAS");
+	btnLobbyShop = env->addButton(Scale(60, 308, 260, 352), wMainMenu, BUTTON_LOBBY_SHOP, L"🛒  TIENDA");
+	btnLobbyLogout = env->addButton(Scale(60, 364, 260, 408), wMainMenu, BUTTON_LOBBY_LOGOUT, L"🚪  CERRAR SESIÓN");
 
-	std::vector<irr::gui::IGUIButton*> lobbyBtns = { btnOnlineMode, btnLanMode, btnSingleMode, btnReplayMode, btnDeckEdit };
-	for (auto* btn : lobbyBtns) {
+	btnLobbyReplay = env->addButton(Scale(275, 140, 475, 184), wMainMenu, BUTTON_LOBBY_REPLAY, L"🎬  REPETICIONES");
+	btnLobbyEvents = env->addButton(Scale(275, 196, 475, 240), wMainMenu, BUTTON_LOBBY_EVENTS, L"🧩  EVENTOS");
+	btnLobbyRanking = env->addButton(Scale(275, 252, 475, 296), wMainMenu, BUTTON_LOBBY_RANKING, L"🏆  RANKING");
+	btnLobbyProfile = env->addButton(Scale(275, 308, 475, 352), wMainMenu, BUTTON_LOBBY_PROFILE, L"👤  PERFIL");
+
+	// Legacy pointers for engine compatibility
+	btnOnlineMode = btnLobbyDuels;
+	btnLanMode = btnLobbyDuels;
+	btnSingleMode = btnLobbyEvents;
+	btnReplayMode = btnLobbyReplay;
+	btnDeckEdit = btnLobbyDeck;
+	btnModeExit = btnLobbyLogout;
+
+	std::vector<irr::gui::IGUIButton*> allLobbyBtns = {
+		btnLobbyDuels, btnLobbyDeck, btnLobbyCatalog, btnLobbyShop,
+		btnLobbyReplay, btnLobbyEvents, btnLobbyRanking, btnLobbyProfile
+	};
+	for (auto* btn : allLobbyBtns) {
 		if (!btn) continue;
 		if (tBtnLobbyNormal) btn->setImage(tBtnLobbyNormal);
 		if (tBtnLobbyHover) {
@@ -284,18 +308,20 @@ void Game::Initialize() {
 		btn->setScaleImage(true);
 		btn->setUseAlphaChannel(true);
 		btn->setDrawBorder(false);
+		btn->setTabStop(false);
 		btn->setOverrideColor(irr::video::SColor(255, 230, 245, 255));
 	}
-	if (btnModeExit) {
-		if (tBtnLobbyExit) btnModeExit->setImage(tBtnLobbyExit);
+	if (btnLobbyLogout) {
+		if (tBtnLobbyExit) btnLobbyLogout->setImage(tBtnLobbyExit);
 		if (tBtnLobbyHover) {
-			btnModeExit->setPressedImage(tBtnLobbyHover);
-			btnModeExit->setImage(irr::gui::EGBIS_IMAGE_UP_MOUSEOVER, tBtnLobbyHover);
+			btnLobbyLogout->setPressedImage(tBtnLobbyHover);
+			btnLobbyLogout->setImage(irr::gui::EGBIS_IMAGE_UP_MOUSEOVER, tBtnLobbyHover);
 		}
-		btnModeExit->setScaleImage(true);
-		btnModeExit->setUseAlphaChannel(true);
-		btnModeExit->setDrawBorder(false);
-		btnModeExit->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
+		btnLobbyLogout->setScaleImage(true);
+		btnLobbyLogout->setUseAlphaChannel(true);
+		btnLobbyLogout->setDrawBorder(false);
+		btnLobbyLogout->setTabStop(false);
+		btnLobbyLogout->setOverrideColor(irr::video::SColor(255, 255, 215, 225));
 	}
 
 	// Dashboard Container on the right
@@ -1153,8 +1179,13 @@ void Game::Initialize() {
 		ApplyLocale(selectedLocale, true);
 
 	InitializeLoginPanel();
+	InitDuelsInterface();
+	InitEventsInterface();
+	InitShopInterface();
+	InitProfileInterface();
+	InitRankingInterface();
+	if (wTopBarMarquee) env->getRootGUIElement()->bringToFront(wTopBarMarquee);
 	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
-	if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
 }
 
 void Game::LoadCore() {
@@ -2211,6 +2242,7 @@ bool Game::MainLoop() {
 		} else { // bottom right of window with a little padding
 			fpsCounter->setRelativePosition(Resize(1024 - fpsCounterWidth, 620, 1024, 640));
 		}
+		UpdateMarquee((float)delta_time / 1000.0f);
 		wBtnSettings->setVisible(!(is_building || is_siding || dInfo.isInDuel || open_file));
 		DrawGUI();
 		DrawSpec();
@@ -4354,6 +4386,10 @@ void Game::PerformLogin(bool forceSession) {
 		isLoggedAdmin = res.isAdmin;
 
 		gGameConfig->nickname = loggedUsername;
+		if (ebNickName) ebNickName->setText(loggedUsername.c_str());
+		if (ebNickNameOnline) ebNickNameOnline->setText(loggedUsername.c_str());
+		if (ebJoinHost) ebJoinHost->setText(L"172.28.38.45");
+		if (ebJoinPort) ebJoinPort->setText(L"7911");
 
 		ShowLoginPanel(false);
 		RepositionLobby();
@@ -4424,6 +4460,7 @@ void Game::PerformLogout() {
 	loggedUsername = L"";
 	loggedEmail = L"";
 
+	if (wTopBarMarquee) wTopBarMarquee->setVisible(false);
 	wMainMenu->setVisible(false);
 	if (wDuelsWindow) wDuelsWindow->setVisible(false);
 	if (wEventsWindow) wEventsWindow->setVisible(false);
@@ -4432,6 +4469,7 @@ void Game::PerformLogout() {
 	if (wShopAvatarsWindow) wShopAvatarsWindow->setVisible(false);
 	if (wShopBoostersWindow) wShopBoostersWindow->setVisible(false);
 	if (wProfileWindow) wProfileWindow->setVisible(false);
+	if (wRankingWindow) wRankingWindow->setVisible(false);
 	ShowLoginPanel(true);
 	SwitchLoginRegisterView(false);
 	CheckServerStatus();
@@ -4444,28 +4482,34 @@ void Game::RepositionLobby() {
 	if (bottomY < topY + Scale(100)) bottomY = topY + Scale(100);
 	wMainMenu->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
 
-	int btnWidth = Scale(230);
-	int btnHeight = Scale(46);
-	int gap = Scale(14);
-	int totalHeight = 6 * btnHeight + 5 * gap;
+	int btnWidth = Scale(195);
+	int btnHeight = Scale(44);
+	int gapY = Scale(12);
+	int gapX = Scale(16);
 
-	int startX = Scale(60);
-	int startY = (window_size.Height - totalHeight) / 2 + Scale(20);
-	if (startY < Scale(80)) startY = Scale(80);
-	int relStartY = startY - topY;
+	int startX = Scale(50);
+	int relStartY = Scale(45);
 
-	if (btnOnlineMode) btnOnlineMode->setRelativePosition(irr::core::recti(startX, relStartY, startX + btnWidth, relStartY + btnHeight));
-	if (btnLanMode) btnLanMode->setRelativePosition(irr::core::recti(startX, relStartY + (btnHeight + gap), startX + btnWidth, relStartY + 2 * btnHeight + gap));
-	if (btnSingleMode) btnSingleMode->setRelativePosition(irr::core::recti(startX, relStartY + 2 * (btnHeight + gap), startX + btnWidth, relStartY + 3 * btnHeight + 2 * gap));
-	if (btnReplayMode) btnReplayMode->setRelativePosition(irr::core::recti(startX, relStartY + 3 * (btnHeight + gap), startX + btnWidth, relStartY + 4 * btnHeight + 3 * gap));
-	if (btnDeckEdit) btnDeckEdit->setRelativePosition(irr::core::recti(startX, relStartY + 4 * (btnHeight + gap), startX + btnWidth, relStartY + 5 * btnHeight + 4 * gap));
-	if (btnModeExit) btnModeExit->setRelativePosition(irr::core::recti(startX, relStartY + 5 * (btnHeight + gap), startX + btnWidth, relStartY + 6 * btnHeight + 5 * gap));
+	// Column 1 (Left): Duels, Deck, Catalog, Shop, Logout
+	if (btnLobbyDuels) btnLobbyDuels->setRelativePosition(irr::core::recti(startX, relStartY, startX + btnWidth, relStartY + btnHeight));
+	if (btnLobbyDeck) btnLobbyDeck->setRelativePosition(irr::core::recti(startX, relStartY + (btnHeight + gapY), startX + btnWidth, relStartY + 2 * btnHeight + gapY));
+	if (btnLobbyCatalog) btnLobbyCatalog->setRelativePosition(irr::core::recti(startX, relStartY + 2 * (btnHeight + gapY), startX + btnWidth, relStartY + 3 * btnHeight + 2 * gapY));
+	if (btnLobbyShop) btnLobbyShop->setRelativePosition(irr::core::recti(startX, relStartY + 3 * (btnHeight + gapY), startX + btnWidth, relStartY + 4 * btnHeight + 3 * gapY));
+	if (btnLobbyLogout) btnLobbyLogout->setRelativePosition(irr::core::recti(startX, relStartY + 4 * (btnHeight + gapY), startX + btnWidth, relStartY + 5 * btnHeight + 4 * gapY));
+
+	// Column 2 (Middle): Replays, Events, Ranking, Profile
+	int startX2 = startX + btnWidth + gapX;
+	if (btnLobbyReplay) btnLobbyReplay->setRelativePosition(irr::core::recti(startX2, relStartY, startX2 + btnWidth, relStartY + btnHeight));
+	if (btnLobbyEvents) btnLobbyEvents->setRelativePosition(irr::core::recti(startX2, relStartY + (btnHeight + gapY), startX2 + btnWidth, relStartY + 2 * btnHeight + gapY));
+	if (btnLobbyRanking) btnLobbyRanking->setRelativePosition(irr::core::recti(startX2, relStartY + 2 * (btnHeight + gapY), startX2 + btnWidth, relStartY + 3 * btnHeight + 2 * gapY));
+	if (btnLobbyProfile) btnLobbyProfile->setRelativePosition(irr::core::recti(startX2, relStartY + 3 * (btnHeight + gapY), startX2 + btnWidth, relStartY + 4 * btnHeight + 3 * gapY));
 
 	// Dashboard on the right
 	if (wDashboard) {
 		int dashWidth = Scale(270);
-		int dashHeight = Scale(250);
-		int dashX = window_size.Width - dashWidth - Scale(60);
+		int dashHeight = Scale(260);
+		int dashX = window_size.Width - dashWidth - Scale(50);
+		if (dashX < startX2 + btnWidth + Scale(20)) dashX = startX2 + btnWidth + Scale(20);
 		int dashY = relStartY;
 		wDashboard->setRelativePosition(irr::core::recti(dashX, dashY, dashX + dashWidth, dashY + dashHeight));
 
@@ -4476,14 +4520,17 @@ void Game::RepositionLobby() {
 		if (stDashboardStatus) stDashboardStatus->setRelativePosition(irr::core::recti(Scale(20), Scale(100), dashWidth - Scale(20), Scale(122)));
 		if (stDashboardOnline) stDashboardOnline->setRelativePosition(irr::core::recti(Scale(20), Scale(128), dashWidth - Scale(20), Scale(150)));
 		if (stDashboardAccounts) stDashboardAccounts->setRelativePosition(irr::core::recti(Scale(20), Scale(154), dashWidth - Scale(20), Scale(176)));
-		if (btnDashboardLogout) btnDashboardLogout->setRelativePosition(irr::core::recti(Scale(30), Scale(192), dashWidth - Scale(30), Scale(232)));
+		if (btnDashboardLogout) btnDashboardLogout->setRelativePosition(irr::core::recti(Scale(30), Scale(196), dashWidth - Scale(30), Scale(236)));
 	}
 
-	// Reposition Settings button clearly in bottom-left corner with generous hit-box
+	if (wTopBarMarquee) {
+		wTopBarMarquee->setRelativePosition(irr::core::recti(0, 0, window_size.Width, Scale(28)));
+		env->getRootGUIElement()->bringToFront(wTopBarMarquee);
+	}
 	if (wBtnSettings) {
-		int btnSetSize = Scale(38);
-		int btnSetX = Scale(10);
-		int btnSetY = window_size.Height - btnSetSize - Scale(8);
+		int btnSetSize = Scale(24);
+		int btnSetX = window_size.Width - btnSetSize - Scale(6);
+		int btnSetY = Scale(2);
 		wBtnSettings->setRelativePosition(irr::core::recti(btnSetX, btnSetY, btnSetX + btnSetSize, btnSetY + btnSetSize));
 		if (btnSettings) {
 			btnSettings->setRelativePosition(irr::core::recti(0, 0, btnSetSize, btnSetSize));
@@ -4491,14 +4538,12 @@ void Game::RepositionLobby() {
 		}
 		env->getRootGUIElement()->bringToFront(wBtnSettings);
 	}
-	if (mTopMenu) {
-		env->getRootGUIElement()->bringToFront(mTopMenu);
-	}
 
 	RepositionDuels();
 	RepositionEvents();
 	RepositionShop();
 	RepositionProfile();
+	RepositionRanking();
 }
 
 void Game::UpdateDashboardStats() {
@@ -4554,6 +4599,7 @@ void Game::SwitchMainView(int viewId) {
 	if (wShopAvatarsWindow) wShopAvatarsWindow->setVisible(viewId == VIEW_SHOP_AVATARS);
 	if (wShopBoostersWindow) wShopBoostersWindow->setVisible(viewId == VIEW_SHOP_BOOSTERS);
 	if (wProfileWindow) wProfileWindow->setVisible(viewId == VIEW_PROFILE);
+	if (wRankingWindow) wRankingWindow->setVisible(viewId == VIEW_RANKING);
 
 	switch (viewId) {
 	case VIEW_LOBBY:
@@ -4576,10 +4622,16 @@ void Game::SwitchMainView(int viewId) {
 		UpdateProfileData();
 		RepositionProfile();
 		break;
+	case VIEW_RANKING:
+		RepositionRanking();
+		break;
 	}
 
+	if (wTopBarMarquee) {
+		wTopBarMarquee->setVisible(true);
+		env->getRootGUIElement()->bringToFront(wTopBarMarquee);
+	}
 	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
-	if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
 }
 
 void Game::InitDuelsInterface() {
@@ -4646,6 +4698,14 @@ void Game::InitDuelsInterface() {
 	btnDuelBot->setUseAlphaChannel(true);
 	btnDuelBot->setDrawBorder(false);
 	btnDuelBot->setOverrideColor(irr::video::SColor(255, 255, 240, 200));
+
+	btnDuelsBack = env->addButton(Scale(40, 360, 260, 402), wDuelsWindow, BUTTON_RETURN_TO_LOBBY, L"⬅ VOLVER AL LOBBY");
+	if (tBtnLobbyExit) btnDuelsBack->setImage(tBtnLobbyExit);
+	btnDuelsBack->setScaleImage(true);
+	btnDuelsBack->setUseAlphaChannel(true);
+	btnDuelsBack->setTabStop(false);
+	btnDuelsBack->setDrawBorder(false);
+	btnDuelsBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 }
 
 void Game::RepositionDuels() {
@@ -4678,6 +4738,7 @@ void Game::RepositionDuels() {
 		if (cardDuelOnline) cardDuelOnline->setRelativePosition(irr::core::recti(startX, Scale(75), startX + cardW, Scale(75) + cardH));
 		if (cardDuelBot) cardDuelBot->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
 	}
+	if (btnDuelsBack) btnDuelsBack->setRelativePosition(irr::core::recti(Scale(40), cardH + Scale(95), Scale(260), cardH + Scale(137)));
 }
 
 void Game::InitEventsInterface() {
@@ -4739,6 +4800,14 @@ void Game::InitEventsInterface() {
 
 	btnEventTournaments = env->addButton(Scale(25, 270, 335, 315), cardEventTournaments, -1, L"EN PREPARACIÓN");
 	btnEventTournaments->setEnabled(false);
+
+	btnEventsBack = env->addButton(Scale(40, 360, 260, 402), wEventsWindow, BUTTON_RETURN_TO_LOBBY, L"⬅ VOLVER AL LOBBY");
+	if (tBtnLobbyExit) btnEventsBack->setImage(tBtnLobbyExit);
+	btnEventsBack->setScaleImage(true);
+	btnEventsBack->setUseAlphaChannel(true);
+	btnEventsBack->setTabStop(false);
+	btnEventsBack->setDrawBorder(false);
+	btnEventsBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 }
 
 void Game::RepositionEvents() {
@@ -4766,6 +4835,7 @@ void Game::RepositionEvents() {
 		if (cardEventPuzzle) cardEventPuzzle->setRelativePosition(irr::core::recti(startX, Scale(75), startX + cardW, Scale(75) + cardH));
 		if (cardEventTournaments) cardEventTournaments->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
 	}
+	if (btnEventsBack) btnEventsBack->setRelativePosition(irr::core::recti(Scale(40), cardH + Scale(95), Scale(260), cardH + Scale(137)));
 }
 
 void Game::InitShopInterface() {
@@ -4830,6 +4900,14 @@ void Game::InitShopInterface() {
 	btnShopBoosters->setScaleImage(true);
 	btnShopBoosters->setUseAlphaChannel(true);
 	btnShopBoosters->setDrawBorder(false);
+
+	btnShopBack = env->addButton(Scale(40, 360, 260, 402), wShopWindow, BUTTON_RETURN_TO_LOBBY, L"⬅ VOLVER AL LOBBY");
+	if (tBtnLobbyExit) btnShopBack->setImage(tBtnLobbyExit);
+	btnShopBack->setScaleImage(true);
+	btnShopBack->setUseAlphaChannel(true);
+	btnShopBack->setTabStop(false);
+	btnShopBack->setDrawBorder(false);
+	btnShopBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 
 	// --- Sub-interfaces for Shop ---
 	// 1. Packs Window
@@ -4956,6 +5034,7 @@ void Game::RepositionShop() {
 		if (cardShopAvatars) cardShopAvatars->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
 		if (cardShopBoosters) cardShopBoosters->setRelativePosition(irr::core::recti(startX, Scale(95) + 2 * cardH, startX + cardW, Scale(95) + 3 * cardH));
 	}
+	if (btnShopBack) btnShopBack->setRelativePosition(irr::core::recti(Scale(40), cardH + Scale(95), Scale(260), cardH + Scale(137)));
 }
 
 void Game::InitProfileInterface() {
@@ -5002,6 +5081,14 @@ void Game::InitProfileInterface() {
 	if (tBtnLobbyExit) btnProfileLogout->setImage(tBtnLobbyExit);
 	btnProfileLogout->setScaleImage(true);
 
+	btnProfileBack = env->addButton(Scale(40, 360, 260, 402), wProfileWindow, BUTTON_RETURN_TO_LOBBY, L"⬅ VOLVER AL LOBBY");
+	if (tBtnLobbyExit) btnProfileBack->setImage(tBtnLobbyExit);
+	btnProfileBack->setScaleImage(true);
+	btnProfileBack->setUseAlphaChannel(true);
+	btnProfileBack->setTabStop(false);
+	btnProfileBack->setDrawBorder(false);
+	btnProfileBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
+
 	// Right: Stats
 	panelProfileStats = env->addStaticText(L"", Scale(380, 60, 740, 360), true, true, wProfileWindow);
 	panelProfileStats->setBackgroundColor(irr::video::SColor(220, 20, 26, 44));
@@ -5014,7 +5101,7 @@ void Game::InitProfileInterface() {
 		L"• Winrate Global: 69.0%\n\n"
 		L"• Oro Disponible: 🪙 2,500\n"
 		L"• Gemas Disponibles: 💎 350\n\n"
-		L"• Servidor Oficial: Ani-Dimension (127.0.0.1:7911)\n"
+		L"• Servidor Oficial: Ani-Dimension (172.28.38.45:7911)\n"
 		L"• Latencia / Ping: 12ms", Scale(25, 20, 335, 270), false, true, panelProfileStats);
 	stProfileUserStats->setOverrideColor(irr::video::SColor(255, 220, 235, 250));
 }
@@ -5043,6 +5130,7 @@ void Game::RepositionProfile() {
 		if (panelProfileUserCard) panelProfileUserCard->setRelativePosition(irr::core::recti(startX, Scale(55), startX + panelW, Scale(55) + panelH));
 		if (panelProfileStats) panelProfileStats->setRelativePosition(irr::core::recti(startX, Scale(65) + panelH, startX + panelW, Scale(65) + 2 * panelH));
 	}
+	if (btnProfileBack) btnProfileBack->setRelativePosition(irr::core::recti(Scale(40), panelH + Scale(75), Scale(260), panelH + Scale(117)));
 }
 
 void Game::UpdateProfileData() {
@@ -5056,6 +5144,115 @@ void Game::UpdateProfileData() {
 		std::wstring roleStr = (loggedUsername == L"Admin" || loggedUsername == L"admin") ? L"Rol: [ Administrador ]" : L"Rol: [ Duelista ]";
 		stProfileUserRole->setText(roleStr.c_str());
 	}
+}
+
+void Game::InitRankingInterface() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wRankingWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wRankingWindow->getCloseButton()->setVisible(false);
+	wRankingWindow->setDraggable(false);
+	wRankingWindow->setDrawBackground(false);
+	wRankingWindow->setDrawTitlebar(false);
+	wRankingWindow->setVisible(false);
+
+	stRankingHeader = env->addStaticText(L"TABLA DE CLASIFICACIÓN GLOBAL - RANKING TEMPORADA 1", Scale(40, 15, 750, 45), false, false, wRankingWindow);
+	stRankingHeader->setOverrideColor(irr::video::SColor(255, 255, 215, 80));
+
+	// Ranking Table (Left / Center)
+	panelRankingTable = env->addStaticText(L"", Scale(40, 60, 520, 360), true, true, wRankingWindow);
+	panelRankingTable->setBackgroundColor(irr::video::SColor(220, 18, 22, 38));
+
+	auto txtRankList = env->addStaticText(
+		L"TOP DUELISTAS DE LA COMUNIDAD\n\n"
+		L" #1   👑 Admin             ELO: 2,450   [ Gran Maestro ]\n"
+		L" #2   ⚔ Oscar             ELO: 2,120   [ Maestro Diamante ]\n"
+		L" #3   ✨ Sofia             ELO: 1,980   [ Duelista Platino ]\n"
+		L" #4   🌸 Yuli              ELO: 1,890   [ Duelista Oro ]\n"
+		L" #5   🛡 KaibaCorp         ELO: 1,750   [ Duelista Plata ]\n"
+		L" #6   🔥 PhoenixLord       ELO: 1,680   [ Duelista Plata ]\n"
+		L" #7   ⚡ DarkMagician      ELO: 1,610   [ Duelista Bronce ]\n"
+		L" #8   🎲 CyberDragon       ELO: 1,540   [ Duelista Bronce ]\n"
+		L" #9   🌟 AstralDuels       ELO: 1,480   [ Duelista Bronce ]\n"
+		L"#10   🔮 MysticSeer        ELO: 1,420   [ Novato ]",
+		Scale(20, 15, 460, 285), false, true, panelRankingTable);
+	txtRankList->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
+
+	// User Rank Card (Right)
+	panelRankingUser = env->addStaticText(L"", Scale(540, 60, 800, 360), true, true, wRankingWindow);
+	panelRankingUser->setBackgroundColor(irr::video::SColor(220, 22, 28, 48));
+
+	auto txtUserTitle = env->addStaticText(L"TU POSICIÓN EN LA TEMPORADA", Scale(20, 18, 240, 42), false, false, panelRankingUser);
+	txtUserTitle->setOverrideColor(irr::video::SColor(255, 120, 240, 255));
+
+	auto txtUserStats = env->addStaticText(
+		L"Rango Actual: #2 en Servidor\n\n"
+		L"• División: Maestro Diamante\n"
+		L"• Puntuación ELO: 2,120 pts\n"
+		L"• Racha Actual: 5 Victorias\n"
+		L"• Winrate Temporada: 69.0%\n\n"
+		L"🎁 Recompensa Fin de Temporada:\n"
+		L"• 2,500 Gemas + 10,000 Oro\n"
+		L"• Marco Exclusivo Diamante\n"
+		L"• Título 'Duelista de Leyenda'",
+		Scale(20, 50, 240, 285), false, true, panelRankingUser);
+	txtUserStats->setOverrideColor(irr::video::SColor(255, 220, 230, 245));
+
+	btnRankingBack = env->addButton(Scale(40, 360, 260, 402), wRankingWindow, BUTTON_RETURN_TO_LOBBY, L"⬅ VOLVER AL LOBBY");
+	if (tBtnLobbyExit) btnRankingBack->setImage(tBtnLobbyExit);
+	btnRankingBack->setScaleImage(true);
+	btnRankingBack->setUseAlphaChannel(true);
+	btnRankingBack->setTabStop(false);
+	btnRankingBack->setDrawBorder(false);
+	btnRankingBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
+}
+
+void Game::RepositionRanking() {
+	if (!wRankingWindow) return;
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wRankingWindow->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
+
+	int availW = window_size.Width;
+	int tableW = Scale(480);
+	int userW = Scale(260);
+	int panelH = Scale(300);
+	int gap = Scale(20);
+
+	if (stRankingHeader) stRankingHeader->setRelativePosition(irr::core::recti(Scale(40), Scale(15), availW - Scale(40), Scale(45)));
+
+	if (availW >= tableW + userW + gap) {
+		int totalW = tableW + userW + gap;
+		int startX = (availW - totalW) / 2;
+		int startY = Scale(60);
+		if (panelRankingTable) panelRankingTable->setRelativePosition(irr::core::recti(startX, startY, startX + tableW, startY + panelH));
+		if (panelRankingUser) panelRankingUser->setRelativePosition(irr::core::recti(startX + tableW + gap, startY, startX + totalW, startY + panelH));
+	} else {
+		int startX = Scale(20);
+		int w = availW - Scale(40);
+		if (panelRankingTable) panelRankingTable->setRelativePosition(irr::core::recti(startX, Scale(55), startX + w, Scale(55) + panelH));
+		if (panelRankingUser) panelRankingUser->setRelativePosition(irr::core::recti(startX, Scale(65) + panelH, startX + w, Scale(65) + 2 * panelH));
+	}
+
+	if (btnRankingBack) btnRankingBack->setRelativePosition(irr::core::recti(Scale(40), panelH + Scale(75), Scale(260), panelH + Scale(117)));
+}
+
+void Game::UpdateMarquee(float dt) {
+	if (!wTopBarMarquee || !wTopBarMarquee->isVisible() || !stMarqueeText)
+		return;
+
+	// Marquee speed: ~45 pixels per second for a smooth, readable ticker
+	float speed = (float)Scale(45);
+	marqueeX -= speed * dt;
+
+	int textW = Scale(1500);
+
+	if (marqueeX < -textW) {
+		marqueeX = (float)window_size.Width;
+	}
+
+	int barH = Scale(28);
+	stMarqueeText->setRelativePosition(irr::core::recti((int)marqueeX, Scale(4), (int)marqueeX + textW, barH));
 }
 
 } // namespace ygo

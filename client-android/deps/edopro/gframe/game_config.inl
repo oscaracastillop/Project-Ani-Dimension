@@ -77,7 +77,7 @@ OPTION(bool, ctrlClickIsRMB, true)
 OPTION(bool, ctrlClickIsRMB, false)
 #endif
 #if EDOPRO_ANDROID
-OPTION(float, dpi_scale, 1.0f)
+OPTION(float, dpi_scale, 2.f)
 #else
 OPTION(float, dpi_scale, 1.f)
 #endif
