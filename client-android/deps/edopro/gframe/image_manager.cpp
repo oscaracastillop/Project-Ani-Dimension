@@ -90,6 +90,14 @@ bool ImageManager::Initial() {
 	textures_path = BASE_PATH;
 
 	tCover[0] = loadTextureFixedSize(EPRO_TEXT("cover"sv), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+	if(!tCover[0]) {
+		auto img = driver->createImage(irr::video::ECF_A8R8G8B8, irr::core::dimension2d<irr::u32>(mainGame->Scale(CARD_IMG_WIDTH), mainGame->Scale(CARD_IMG_HEIGHT)));
+		if(img) {
+			img->fill(irr::video::SColor(255, 30, 40, 60));
+			tCover[0] = driver->addTexture("cover_fallback", img);
+			img->drop();
+		}
+	}
 	ASSERT_TEXTURE_LOADED(tCover[0], "cover");
 
 	tCover[1] = loadTextureFixedSize(EPRO_TEXT("cover2"sv), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
@@ -97,6 +105,8 @@ bool ImageManager::Initial() {
 		tCover[1] = tCover[0];
 
 	tUnknown = loadTextureFixedSize(EPRO_TEXT("unknown"sv), CARD_IMG_WIDTH, CARD_IMG_HEIGHT);
+	if(!tUnknown)
+		tUnknown = tCover[0];
 	ASSERT_TEXTURE_LOADED(tUnknown, "unknown");
 
 	tAct = loadTextureAnySize(EPRO_TEXT("act"sv));

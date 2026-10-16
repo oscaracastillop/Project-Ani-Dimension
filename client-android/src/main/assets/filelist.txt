@@ -82,37 +82,6 @@ pics/field
 pics/temp
 puzzles
 puzzles/Canon collection
-puzzles/Canon collection/.git
-puzzles/Canon collection/.git/config
-puzzles/Canon collection/.git/description
-puzzles/Canon collection/.git/FETCH_HEAD
-puzzles/Canon collection/.git/HEAD
-puzzles/Canon collection/.git/hooks
-puzzles/Canon collection/.git/hooks/README.sample
-puzzles/Canon collection/.git/index
-puzzles/Canon collection/.git/info
-puzzles/Canon collection/.git/info/exclude
-puzzles/Canon collection/.git/logs
-puzzles/Canon collection/.git/logs/HEAD
-puzzles/Canon collection/.git/logs/refs
-puzzles/Canon collection/.git/logs/refs/heads
-puzzles/Canon collection/.git/logs/refs/heads/master
-puzzles/Canon collection/.git/logs/refs/remotes
-puzzles/Canon collection/.git/logs/refs/remotes/origin
-puzzles/Canon collection/.git/logs/refs/remotes/origin/master
-puzzles/Canon collection/.git/objects
-puzzles/Canon collection/.git/objects/info
-puzzles/Canon collection/.git/objects/pack
-puzzles/Canon collection/.git/objects/pack/pack-f668ab43ce0ac7479bcd065789b72ee80c408461.idx
-puzzles/Canon collection/.git/objects/pack/pack-f668ab43ce0ac7479bcd065789b72ee80c408461.pack
-puzzles/Canon collection/.git/refs
-puzzles/Canon collection/.git/refs/heads
-puzzles/Canon collection/.git/refs/heads/master
-puzzles/Canon collection/.git/refs/remotes
-puzzles/Canon collection/.git/refs/remotes/origin
-puzzles/Canon collection/.git/refs/remotes/origin/HEAD
-puzzles/Canon collection/.git/refs/remotes/origin/master
-puzzles/Canon collection/.git/refs/tags
 puzzles/Canon collection/COPYING
 puzzles/Canon collection/Duel Links
 puzzles/Canon collection/Duel Links/Naim_DuelLinks_1_1.lua

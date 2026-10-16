@@ -478,6 +478,7 @@ public class MainActivity extends Activity {
 	}
 
 	public void copyAssetsPrompt(final String working_dir) {
+		ensureEssentialAssets(working_dir);
 		changelog = false;
 		var file = new File(getFilesDir(), "assets_copied");
 		var cover1 = new File(working_dir, "textures/cover.jpg");
@@ -585,6 +586,33 @@ public class MainActivity extends Activity {
 								}
 							}
 						}
+					}
+				} catch (Exception ignored) {
+				}
+			}
+
+			File sysConf = new File(configDir, "system.conf");
+			if (sysConf.exists()) {
+				try {
+					StringBuilder sb = new StringBuilder();
+					try (BufferedReader br = new BufferedReader(new FileReader(sysConf))) {
+						String l;
+						while ((l = br.readLine()) != null) {
+							if (l.trim().startsWith("dpi_scale")) {
+								sb.append("dpi_scale = 1.000000\n");
+							} else if (l.trim().startsWith("textfont")) {
+								sb.append("textfont = fonts/NotoSansJP-Regular.otf 11\n");
+							} else {
+								sb.append(l).append("\n");
+							}
+						}
+					}
+					String content = sb.toString();
+					if (!content.contains("textfont =")) {
+						content += "textfont = fonts/NotoSansJP-Regular.otf 11\n";
+					}
+					try (FileWriter fw = new FileWriter(sysConf)) {
+						fw.write(content);
 					}
 				} catch (Exception ignored) {
 				}

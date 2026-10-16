@@ -4127,71 +4127,71 @@ void Game::InitializeLoginPanel() {
 
 	// Centered Cyber Frosted Glass Background Panel
 	if (texPanelBg) {
-		imgLoginBg = env->addImage(Scale(322, 55, 702, 585), env->getRootGUIElement(), -1, L"");
+		imgLoginBg = env->addImage(Scale(332, 45, 692, 505), env->getRootGUIElement(), -1, L"");
 		imgLoginBg->setImage(texPanelBg);
 		imgLoginBg->setScaleImage(true);
 		imgLoginBg->setUseAlphaChannel(true);
 	}
 
 	// Borderless / Titleless Interactive Window container
-	wLoginWindow = env->addWindow(Scale(322, 55, 702, 585), false, L"");
+	wLoginWindow = env->addWindow(Scale(332, 45, 692, 505), false, L"");
 	wLoginWindow->setDrawTitlebar(false);
 	wLoginWindow->setDrawBackground(false);
 	wLoginWindow->getCloseButton()->setVisible(false);
 	wLoginWindow->setDraggable(false);
 
-	// Centered Logo (exact 1.655:1 aspect ratio, clean, razor sharp)
+	// Centered Logo (exact 1.655:1 aspect ratio, clean, compact)
 	if (texLogo) {
-		imgLoginLogo = env->addImage(Scale(68, 16, 312, 164), wLoginWindow, -1, L"");
+		imgLoginLogo = env->addImage(Scale(80, 10, 280, 114), wLoginWindow, -1, L"");
 		imgLoginLogo->setImage(texLogo);
 		imgLoginLogo->setScaleImage(true);
 		imgLoginLogo->setUseAlphaChannel(true);
 	}
 
 	// Server Status text (glowing cyan / emerald)
-	stServerStatus = env->addStaticText(L"Verificando servidor...", Scale(20, 172, 360, 192), false, false, wLoginWindow);
+	stServerStatus = env->addStaticText(L"Verificando servidor...", Scale(15, 120, 345, 140), false, false, wLoginWindow);
 	stServerStatus->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 
 	// --- VISTA LOGIN ---
-	stLoginUserLabel = env->addStaticText(L"Usuario o Correo Electr\u00f3nico:", Scale(35, 202, 345, 222), false, false, wLoginWindow);
+	stLoginUserLabel = env->addStaticText(L"Usuario o Correo Electr\u00f3nico:", Scale(30, 148, 330, 166), false, false, wLoginWindow);
 	stLoginUserLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	ebLoginUser = env->addEditBox(L"", Scale(35, 224, 345, 256), true, wLoginWindow, EDITBOX_LOGIN_USER);
+	ebLoginUser = env->addEditBox(L"", Scale(30, 168, 330, 198), true, wLoginWindow, EDITBOX_LOGIN_USER);
 
-	stLoginPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(35, 264, 345, 284), false, false, wLoginWindow);
+	stLoginPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(30, 204, 330, 222), false, false, wLoginWindow);
 	stLoginPassLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	ebLoginPassword = env->addEditBox(L"", Scale(35, 286, 345, 318), true, wLoginWindow, EDITBOX_LOGIN_PASSWORD);
+	ebLoginPassword = env->addEditBox(L"", Scale(30, 224, 330, 254), true, wLoginWindow, EDITBOX_LOGIN_PASSWORD);
 	ebLoginPassword->setPasswordBox(true, L'*');
 
-	btnLoginSubmit = env->addButton(Scale(35, 335, 345, 370), wLoginWindow, BUTTON_LOGIN_SUBMIT, L"INICIAR SESI\u00d3N");
-	btnLoginForce = env->addButton(Scale(35, 375, 345, 405), wLoginWindow, BUTTON_LOGIN_FORCE, L"Cerrar otra sesi\u00f3n e ingresar");
+	btnLoginSubmit = env->addButton(Scale(30, 266, 330, 300), wLoginWindow, BUTTON_LOGIN_SUBMIT, L"INICIAR SESI\u00d3N");
+	btnLoginForce = env->addButton(Scale(30, 306, 330, 334), wLoginWindow, BUTTON_LOGIN_FORCE, L"Cerrar otra sesi\u00f3n e ingresar");
 	btnLoginForce->setVisible(false);
 
-	btnLoginToRegister = env->addButton(Scale(35, 412, 345, 442), wLoginWindow, BUTTON_LOGIN_TO_REGISTER, L"\u00bfNo tienes cuenta? Reg\u00edstrate aqu\u00ed");
-	btnLoginExit = env->addButton(Scale(110, 452, 270, 482), wLoginWindow, BUTTON_LOGIN_EXIT, L"Salir");
+	btnLoginToRegister = env->addButton(Scale(30, 340, 330, 370), wLoginWindow, BUTTON_LOGIN_TO_REGISTER, L"\u00bfNo tienes cuenta? Reg\u00edstrate aqu\u00ed");
+	btnLoginExit = env->addButton(Scale(105, 376, 255, 404), wLoginWindow, BUTTON_LOGIN_EXIT, L"Salir");
 
 	// --- VISTA REGISTRO ---
-	stRegUserLabel = env->addStaticText(L"Nombre de Usuario:", Scale(35, 198, 345, 218), false, false, wLoginWindow);
+	stRegUserLabel = env->addStaticText(L"Nombre de Usuario:", Scale(30, 144, 330, 162), false, false, wLoginWindow);
 	stRegUserLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	ebRegUser = env->addEditBox(L"", Scale(35, 218, 345, 248), true, wLoginWindow, EDITBOX_REG_USER);
+	ebRegUser = env->addEditBox(L"", Scale(30, 162, 330, 190), true, wLoginWindow, EDITBOX_REG_USER);
 
-	stRegEmailLabel = env->addStaticText(L"Correo Electr\u00f3nico:", Scale(35, 252, 345, 272), false, false, wLoginWindow);
+	stRegEmailLabel = env->addStaticText(L"Correo Electr\u00f3nico:", Scale(30, 194, 330, 212), false, false, wLoginWindow);
 	stRegEmailLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	ebRegEmail = env->addEditBox(L"", Scale(35, 272, 345, 302), true, wLoginWindow, EDITBOX_REG_EMAIL);
+	ebRegEmail = env->addEditBox(L"", Scale(30, 212, 330, 240), true, wLoginWindow, EDITBOX_REG_EMAIL);
 
-	stRegPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(35, 306, 345, 326), false, false, wLoginWindow);
+	stRegPassLabel = env->addStaticText(L"Contrase\u00f1a:", Scale(30, 244, 330, 262), false, false, wLoginWindow);
 	stRegPassLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	ebRegPassword = env->addEditBox(L"", Scale(35, 326, 345, 356), true, wLoginWindow, EDITBOX_REG_PASSWORD);
+	ebRegPassword = env->addEditBox(L"", Scale(30, 262, 330, 290), true, wLoginWindow, EDITBOX_REG_PASSWORD);
 	ebRegPassword->setPasswordBox(true, L'*');
 
-	stRegCountryLabel = env->addStaticText(L"Pa\u00eds:", Scale(35, 360, 345, 380), false, false, wLoginWindow);
+	stRegCountryLabel = env->addStaticText(L"Pa\u00eds:", Scale(30, 294, 330, 312), false, false, wLoginWindow);
 	stRegCountryLabel->setOverrideColor(irr::video::SColor(255, 235, 245, 255));
-	cbRegCountry = env->addComboBox(Scale(35, 380, 345, 410), wLoginWindow, COMBOBOX_REG_COUNTRY);
+	cbRegCountry = env->addComboBox(Scale(30, 312, 330, 342), wLoginWindow, COMBOBOX_REG_COUNTRY);
 
-	btnRegSubmit = env->addButton(Scale(35, 418, 345, 450), wLoginWindow, BUTTON_REGISTER_SUBMIT, L"CREAR CUENTA");
-	btnRegToLogin = env->addButton(Scale(35, 456, 345, 486), wLoginWindow, BUTTON_LOGIN_TO_LOGIN, L"\u00bfYa tienes cuenta? Iniciar Sesi\u00f3n");
+	btnRegSubmit = env->addButton(Scale(30, 348, 330, 380), wLoginWindow, BUTTON_REGISTER_SUBMIT, L"CREAR CUENTA");
+	btnRegToLogin = env->addButton(Scale(30, 386, 330, 414), wLoginWindow, BUTTON_LOGIN_TO_LOGIN, L"\u00bfYa tienes cuenta? Iniciar Sesi\u00f3n");
 
 	// Status feedback text
-	stLoginStatus = env->addStaticText(L"", Scale(15, 490, 365, 524), false, true, wLoginWindow);
+	stLoginStatus = env->addStaticText(L"", Scale(15, 418, 345, 448), false, true, wLoginWindow);
 	stLoginStatus->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 
 	SwitchLoginRegisterView(false);
@@ -4208,29 +4208,30 @@ void Game::RepositionLoginPanel() {
 	irr::s32 centerX = screenW / 2;
 	irr::s32 centerY = screenH / 2;
 
-	irr::s32 panelW = Scale(380);
-	irr::s32 panelH = Scale(530);
+	irr::s32 panelW = Scale(360);
+	irr::s32 panelH = Scale(460);
 	irr::s32 panelX = centerX - panelW / 2;
 	irr::s32 panelY = centerY - panelH / 2;
+	if (panelY < Scale(10)) panelY = Scale(10);
 
 	if (imgLoginBg) {
 		imgLoginBg->setRelativePosition(irr::core::recti(panelX, panelY, panelX + panelW, panelY + panelH));
 	}
 	wLoginWindow->setRelativePosition(irr::core::recti(panelX, panelY, panelX + panelW, panelY + panelH));
 
-	// White Dragon: large imposing guardian (460x460) with Blue Box-Shadow Aura
-	irr::s32 dragonBlancoW = Scale(460);
-	irr::s32 dragonBlancoH = Scale(460);
-	irr::s32 dragonBlancoX = panelX - dragonBlancoW + Scale(45);
+	// White Dragon: sleek flanking guardian
+	irr::s32 dragonBlancoW = Scale(300);
+	irr::s32 dragonBlancoH = Scale(300);
+	irr::s32 dragonBlancoX = panelX - dragonBlancoW + Scale(35);
 	irr::s32 dragonBlancoY = centerY - dragonBlancoH / 2;
 	if (imgDragonBlanco) {
 		imgDragonBlanco->setRelativePosition(irr::core::recti(dragonBlancoX, dragonBlancoY, dragonBlancoX + dragonBlancoW, dragonBlancoY + dragonBlancoH));
 	}
 
-	// Black Dragon: large imposing guardian (460x416) with Red Box-Shadow Aura
-	irr::s32 dragonNegroW = Scale(460);
-	irr::s32 dragonNegroH = Scale(416);
-	irr::s32 dragonNegroX = panelX + panelW - Scale(45);
+	// Black Dragon: sleek flanking guardian
+	irr::s32 dragonNegroW = Scale(300);
+	irr::s32 dragonNegroH = Scale(271);
+	irr::s32 dragonNegroX = panelX + panelW - Scale(35);
 	irr::s32 dragonNegroY = centerY - dragonNegroH / 2;
 	if (imgDragonNegro) {
 		imgDragonNegro->setRelativePosition(irr::core::recti(dragonNegroX, dragonNegroY, dragonNegroX + dragonNegroW, dragonNegroY + dragonNegroH));

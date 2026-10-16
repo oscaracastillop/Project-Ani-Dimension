@@ -15,22 +15,6 @@ pics/field
 pics/temp
 puzzles
 puzzles/Canon collection
-puzzles/Canon collection/.git
-puzzles/Canon collection/.git/hooks
-puzzles/Canon collection/.git/info
-puzzles/Canon collection/.git/logs
-puzzles/Canon collection/.git/logs/refs
-puzzles/Canon collection/.git/logs/refs/heads
-puzzles/Canon collection/.git/logs/refs/remotes
-puzzles/Canon collection/.git/logs/refs/remotes/origin
-puzzles/Canon collection/.git/objects
-puzzles/Canon collection/.git/objects/info
-puzzles/Canon collection/.git/objects/pack
-puzzles/Canon collection/.git/refs
-puzzles/Canon collection/.git/refs/heads
-puzzles/Canon collection/.git/refs/remotes
-puzzles/Canon collection/.git/refs/remotes/origin
-puzzles/Canon collection/.git/refs/tags
 puzzles/Canon collection/Duel Links
 puzzles/Canon collection/GX Spirit Caller
 puzzles/Canon collection/GX Spirit Caller/1_Beginner
