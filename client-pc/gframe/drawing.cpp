@@ -1162,6 +1162,10 @@ void Game::HideElement(irr::gui::IGUIElement * win, bool set_action) {
 }
 void Game::PopupElement(irr::gui::IGUIElement * element, int hideframe) {
 	element->getParent()->bringToFront(element);
+	if (element == wMainMenu) {
+		if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+		if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
+	}
 	if(!is_building)
 		dField.panel = element;
 	const auto prevfocused = env->getFocus();

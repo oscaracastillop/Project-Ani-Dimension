@@ -253,7 +253,7 @@ void Game::Initialize() {
 	tBtnLobbyExit = driver->getTexture("textures/btn_lobby_exit.png");
 	tDashboardBg = driver->getTexture("textures/dashboard_panel_bg.png");
 
-	wMainMenu = env->addWindow(irr::core::recti(0, 0, window_size.Width, window_size.Height), false, L"");
+	wMainMenu = env->addWindow(irr::core::recti(0, Scale(28), window_size.Width, window_size.Height - Scale(45)), false, L"");
 	wMainMenu->getCloseButton()->setVisible(false);
 	wMainMenu->setDraggable(false);
 	wMainMenu->setDrawBackground(false);
@@ -1143,9 +1143,9 @@ void Game::Initialize() {
 	if(selectedLocale != 0)
 		ApplyLocale(selectedLocale, true);
 
-	env->getRootGUIElement()->bringToFront(wBtnSettings);
-	env->getRootGUIElement()->bringToFront(mTopMenu);
 	InitializeLoginPanel();
+	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+	if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
 }
 
 void Game::LoadCore() {
@@ -3713,7 +3713,6 @@ void Game::OnResize() {
 	}
 	wRoomListPlaceholder->setRelativePosition(irr::core::recti(0, 0, window_size.Width, window_size.Height));
 	RepositionLobby();
-	wBtnSettings->setRelativePosition(ResizeWin(0, 610, 30, 640));
 	SetCentered(wCommitsLog);
 	SetCentered(updateWindow, false);
 
@@ -4347,6 +4346,8 @@ void Game::PerformLogin(bool forceSession) {
 		UpdateDashboardStats();
 		wMainMenu->setVisible(true);
 		env->getRootGUIElement()->bringToFront(wMainMenu);
+		if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+		if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
 		env->setFocus(wMainMenu);
 	} else if (res.code == 2) {
 		stLoginStatus->setText(L"Esta cuenta ya est\u00e1 activa en otro dispositivo.");
@@ -4420,7 +4421,10 @@ void Game::PerformLogout() {
 
 void Game::RepositionLobby() {
 	if (!wMainMenu) return;
-	wMainMenu->setRelativePosition(irr::core::recti(0, 0, window_size.Width, window_size.Height));
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	if (bottomY < topY + Scale(100)) bottomY = topY + Scale(100);
+	wMainMenu->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
 
 	int btnWidth = Scale(230);
 	int btnHeight = Scale(46);
@@ -4430,20 +4434,21 @@ void Game::RepositionLobby() {
 	int startX = Scale(60);
 	int startY = (window_size.Height - totalHeight) / 2 + Scale(20);
 	if (startY < Scale(80)) startY = Scale(80);
+	int relStartY = startY - topY;
 
-	if (btnOnlineMode) btnOnlineMode->setRelativePosition(irr::core::recti(startX, startY, startX + btnWidth, startY + btnHeight));
-	if (btnLanMode) btnLanMode->setRelativePosition(irr::core::recti(startX, startY + (btnHeight + gap), startX + btnWidth, startY + 2 * btnHeight + gap));
-	if (btnSingleMode) btnSingleMode->setRelativePosition(irr::core::recti(startX, startY + 2 * (btnHeight + gap), startX + btnWidth, startY + 3 * btnHeight + 2 * gap));
-	if (btnReplayMode) btnReplayMode->setRelativePosition(irr::core::recti(startX, startY + 3 * (btnHeight + gap), startX + btnWidth, startY + 4 * btnHeight + 3 * gap));
-	if (btnDeckEdit) btnDeckEdit->setRelativePosition(irr::core::recti(startX, startY + 4 * (btnHeight + gap), startX + btnWidth, startY + 5 * btnHeight + 4 * gap));
-	if (btnModeExit) btnModeExit->setRelativePosition(irr::core::recti(startX, startY + 5 * (btnHeight + gap), startX + btnWidth, startY + 6 * btnHeight + 5 * gap));
+	if (btnOnlineMode) btnOnlineMode->setRelativePosition(irr::core::recti(startX, relStartY, startX + btnWidth, relStartY + btnHeight));
+	if (btnLanMode) btnLanMode->setRelativePosition(irr::core::recti(startX, relStartY + (btnHeight + gap), startX + btnWidth, relStartY + 2 * btnHeight + gap));
+	if (btnSingleMode) btnSingleMode->setRelativePosition(irr::core::recti(startX, relStartY + 2 * (btnHeight + gap), startX + btnWidth, relStartY + 3 * btnHeight + 2 * gap));
+	if (btnReplayMode) btnReplayMode->setRelativePosition(irr::core::recti(startX, relStartY + 3 * (btnHeight + gap), startX + btnWidth, relStartY + 4 * btnHeight + 3 * gap));
+	if (btnDeckEdit) btnDeckEdit->setRelativePosition(irr::core::recti(startX, relStartY + 4 * (btnHeight + gap), startX + btnWidth, relStartY + 5 * btnHeight + 4 * gap));
+	if (btnModeExit) btnModeExit->setRelativePosition(irr::core::recti(startX, relStartY + 5 * (btnHeight + gap), startX + btnWidth, relStartY + 6 * btnHeight + 5 * gap));
 
 	// Dashboard on the right
 	if (wDashboard) {
 		int dashWidth = Scale(270);
 		int dashHeight = Scale(250);
 		int dashX = window_size.Width - dashWidth - Scale(60);
-		int dashY = startY;
+		int dashY = relStartY;
 		wDashboard->setRelativePosition(irr::core::recti(dashX, dashY, dashX + dashWidth, dashY + dashHeight));
 
 		if (imgDashboardBg) imgDashboardBg->setRelativePosition(irr::core::recti(0, 0, dashWidth, dashHeight));
@@ -4454,6 +4459,22 @@ void Game::RepositionLobby() {
 		if (stDashboardOnline) stDashboardOnline->setRelativePosition(irr::core::recti(Scale(20), Scale(128), dashWidth - Scale(20), Scale(150)));
 		if (stDashboardAccounts) stDashboardAccounts->setRelativePosition(irr::core::recti(Scale(20), Scale(154), dashWidth - Scale(20), Scale(176)));
 		if (btnDashboardLogout) btnDashboardLogout->setRelativePosition(irr::core::recti(Scale(30), Scale(192), dashWidth - Scale(30), Scale(232)));
+	}
+
+	// Reposition Settings button clearly in bottom-left corner with generous hit-box
+	if (wBtnSettings) {
+		int btnSetSize = Scale(38);
+		int btnSetX = Scale(10);
+		int btnSetY = window_size.Height - btnSetSize - Scale(8);
+		wBtnSettings->setRelativePosition(irr::core::recti(btnSetX, btnSetY, btnSetX + btnSetSize, btnSetY + btnSetSize));
+		if (btnSettings) {
+			btnSettings->setRelativePosition(irr::core::recti(0, 0, btnSetSize, btnSetSize));
+			btnSettings->setImageSize(irr::core::dimension2du(btnSetSize, btnSetSize));
+		}
+		env->getRootGUIElement()->bringToFront(wBtnSettings);
+	}
+	if (mTopMenu) {
+		env->getRootGUIElement()->bringToFront(mTopMenu);
 	}
 }
 
