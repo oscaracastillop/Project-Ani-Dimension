@@ -146,11 +146,9 @@ bool CGUICustomMenu::OnEvent(const SEvent& event) {
 					case EMIE_LMOUSE_LEFT_UP:
 					{
 						core::vector2d<s32> p(event.MouseInput.X, event.MouseInput.Y);
-						if(!AbsoluteClippingRect.isPointInside(p)) {
-							s32 t = sendClick(p);
-							if((t == 0 || t == 1) && Environment->hasFocus(this))
-								Environment->removeFocus(this);
-						}
+						s32 t = sendClick(p);
+						if((t == 0 || t == 1) && Environment->hasFocus(this))
+							Environment->removeFocus(this);
 
 						return true;
 					}

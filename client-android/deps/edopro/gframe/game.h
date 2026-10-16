@@ -251,6 +251,69 @@ struct main_menu_panel_elements {
 	irr::video::ITexture* tBtnLobbyHover{ nullptr };
 	irr::video::ITexture* tBtnLobbyExit{ nullptr };
 	irr::video::ITexture* tDashboardBg{ nullptr };
+
+	// Main View Switcher
+	int currentMainView{ 0 };
+
+	// Duelos Interface
+	irr::gui::IGUIWindow* wDuelsWindow{ nullptr };
+	irr::gui::IGUIStaticText* stDuelsHeader{ nullptr };
+	irr::gui::IGUIStaticText* stDuelsSubheader{ nullptr };
+	irr::gui::IGUIStaticText* cardDuelOnline{ nullptr };
+	irr::gui::IGUIButton* btnDuelOnline{ nullptr };
+	irr::gui::IGUIStaticText* cardDuelBot{ nullptr };
+	irr::gui::IGUIButton* btnDuelBot{ nullptr };
+
+	// Eventos Interface
+	irr::gui::IGUIWindow* wEventsWindow{ nullptr };
+	irr::gui::IGUIStaticText* stEventsHeader{ nullptr };
+	irr::gui::IGUIStaticText* stEventsSubheader{ nullptr };
+	irr::gui::IGUIStaticText* cardEventPuzzle{ nullptr };
+	irr::gui::IGUIButton* btnEventPuzzle{ nullptr };
+	irr::gui::IGUIStaticText* cardEventTournaments{ nullptr };
+	irr::gui::IGUIButton* btnEventTournaments{ nullptr };
+
+	// Tienda Interface
+	irr::gui::IGUIWindow* wShopWindow{ nullptr };
+	irr::gui::IGUIStaticText* stShopHeader{ nullptr };
+	irr::gui::IGUIStaticText* stShopWallet{ nullptr };
+	irr::gui::IGUIStaticText* cardShopPacks{ nullptr };
+	irr::gui::IGUIButton* btnShopPacks{ nullptr };
+	irr::gui::IGUIStaticText* cardShopAvatars{ nullptr };
+	irr::gui::IGUIButton* btnShopAvatars{ nullptr };
+	irr::gui::IGUIStaticText* cardShopBoosters{ nullptr };
+	irr::gui::IGUIButton* btnShopBoosters{ nullptr };
+	// Sub-interfaces for Shop
+	irr::gui::IGUIWindow* wShopPacksWindow{ nullptr };
+	irr::gui::IGUIWindow* wShopAvatarsWindow{ nullptr };
+	irr::gui::IGUIWindow* wShopBoostersWindow{ nullptr };
+	irr::gui::IGUIButton* btnShopPacksBack{ nullptr };
+	irr::gui::IGUIButton* btnShopAvatarsBack{ nullptr };
+	irr::gui::IGUIButton* btnShopBoostersBack{ nullptr };
+
+	// Perfil Interface
+	irr::gui::IGUIWindow* wProfileWindow{ nullptr };
+	irr::gui::IGUIStaticText* stProfileHeader{ nullptr };
+	irr::gui::IGUIStaticText* panelProfileUserCard{ nullptr };
+	irr::gui::IGUIStaticText* panelProfileStats{ nullptr };
+	irr::gui::IGUIStaticText* stProfileUserName{ nullptr };
+	irr::gui::IGUIStaticText* stProfileUserEmail{ nullptr };
+	irr::gui::IGUIStaticText* stProfileUserRole{ nullptr };
+	irr::gui::IGUIStaticText* stProfileUserCountry{ nullptr };
+	irr::gui::IGUIStaticText* stProfileUserStats{ nullptr };
+	irr::gui::IGUIButton* btnProfileRefresh{ nullptr };
+	irr::gui::IGUIButton* btnProfileLogout{ nullptr };
+};
+
+enum MainViewID {
+	VIEW_LOBBY = 0,
+	VIEW_DUELS = 1,
+	VIEW_EVENTS = 2,
+	VIEW_SHOP = 3,
+	VIEW_PROFILE = 4,
+	VIEW_SHOP_PACKS = 5,
+	VIEW_SHOP_AVATARS = 6,
+	VIEW_SHOP_BOOSTERS = 7
 };
 
 struct lan_panel_elements {
@@ -592,6 +655,16 @@ public:
 	void PerformLogout();
 	void RepositionLobby();
 	void UpdateDashboardStats();
+	void SwitchMainView(int viewId);
+	void InitDuelsInterface();
+	void RepositionDuels();
+	void InitEventsInterface();
+	void RepositionEvents();
+	void InitShopInterface();
+	void RepositionShop();
+	void InitProfileInterface();
+	void RepositionProfile();
+	void UpdateProfileData();
 	void LoadCore();
 #ifdef YGOPRO_BUILD_DLL
 	void LoadCoreFromRepos();

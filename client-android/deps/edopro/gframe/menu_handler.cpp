@@ -118,6 +118,33 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		switch(event.GUIEvent.EventType) {
+		case irr::gui::EGET_MENU_ITEM_SELECTED: {
+			auto menu = static_cast<irr::gui::IGUIContextMenu*>(event.GUIEvent.Caller);
+			if (menu) {
+				int selected = menu->getSelectedItem();
+				int cmdId = menu->getItemCommandId(selected);
+				switch (cmdId) {
+				case MENU_TOP_LOBBY:
+					mainGame->SwitchMainView(VIEW_LOBBY);
+					break;
+				case MENU_TOP_DUELS:
+					mainGame->SwitchMainView(VIEW_DUELS);
+					break;
+				case MENU_TOP_EVENTS:
+					mainGame->SwitchMainView(VIEW_EVENTS);
+					break;
+				case MENU_TOP_SHOP:
+					mainGame->SwitchMainView(VIEW_SHOP);
+					break;
+				case MENU_TOP_PROFILE:
+					mainGame->SwitchMainView(VIEW_PROFILE);
+					break;
+				default:
+					break;
+				}
+			}
+			break;
+		}
 		case irr::gui::EGET_ELEMENT_HOVERED: {
 			// Set cursor to an I-Beam if hovering over an edit box
 			if (event.GUIEvent.Caller->getType() == irr::gui::EGUIET_EDIT_BOX && event.GUIEvent.Caller->isEnabled())
@@ -136,6 +163,54 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 		}
 		case irr::gui::EGET_BUTTON_CLICKED: {
 			switch(id) {
+			case BUTTON_CARD_DUEL_ONLINE: {
+				mainGame->PopupElement(mainGame->wLanWindow);
+				break;
+			}
+			case BUTTON_CARD_DUEL_BOT: {
+				mainGame->lstSinglePlayList->setWorkingPath(L"./windbot", true);
+				mainGame->PopupElement(mainGame->wSinglePlay);
+				break;
+			}
+			case BUTTON_CARD_EVENT_PUZZLE: {
+				mainGame->lstSinglePlayList->setWorkingPath(L"./puzzles", true);
+				mainGame->PopupElement(mainGame->wSinglePlay);
+				break;
+			}
+			case BUTTON_CARD_SHOP_PACKS: {
+				mainGame->SwitchMainView(VIEW_SHOP_PACKS);
+				break;
+			}
+			case BUTTON_CARD_SHOP_AVATARS: {
+				mainGame->SwitchMainView(VIEW_SHOP_AVATARS);
+				break;
+			}
+			case BUTTON_CARD_SHOP_BOOSTERS: {
+				mainGame->SwitchMainView(VIEW_SHOP_BOOSTERS);
+				break;
+			}
+			case BUTTON_SHOP_BACK: {
+				mainGame->SwitchMainView(VIEW_SHOP);
+				break;
+			}
+			case BUTTON_PROFILE_REFRESH: {
+				mainGame->UpdateProfileData();
+				break;
+			}
+			case BUTTON_PROFILE_LOGOUT: {
+				mainGame->PerformLogout();
+				break;
+			}
+			case BUTTON_BUY_PACK_1:
+			case BUTTON_BUY_PACK_2:
+			case BUTTON_BUY_AVATAR_1:
+			case BUTTON_BUY_AVATAR_2:
+			case BUTTON_BUY_BOOSTER_1:
+			case BUTTON_BUY_BOOSTER_2: {
+				mainGame->stMessage->setText(L"¡Transacción realizada con éxito!\nArtículo desbloqueado y añadido a tu cuenta.");
+				mainGame->PopupElement(mainGame->wMessage);
+				break;
+			}
 			case BUTTON_LOGIN_SUBMIT: {
 				mainGame->PerformLogin(false);
 				break;

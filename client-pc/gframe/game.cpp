@@ -190,6 +190,11 @@ void Game::Initialize() {
 	chkCommitLogExpand = env->addCheckBox(false, Scale(295, 435, 500, 460), wCommitsLog, BUTTON_REPO_CHANGELOG_EXPAND, gDataManager->GetSysString(1447).data());
 	defaultStrings.emplace_back(chkCommitLogExpand, 1447);
 	mTopMenu = irr::gui::CGUICustomMenu::addCustomMenu(env);
+	mTopMenu->addItem(L"  Lobby  ", MENU_TOP_LOBBY, true, false);
+	mTopMenu->addItem(L"  Duelos  ", MENU_TOP_DUELS, true, false);
+	mTopMenu->addItem(L"  Eventos  ", MENU_TOP_EVENTS, true, false);
+	mTopMenu->addItem(L"  Tienda  ", MENU_TOP_SHOP, true, false);
+	mTopMenu->addItem(L"  Perfil  ", MENU_TOP_PROFILE, true, false);
 	mRepositoriesInfo = mTopMenu->getSubMenu(mTopMenu->addItem(gDataManager->GetSysString(2045).data(), 1, true, true));
 	mAbout = mTopMenu->getSubMenu(mTopMenu->addItem(gDataManager->GetSysString(1970).data(), 2, true, true));
 	wAbout = env->addWindow(Scale(0, 0, 450, 700), false, L"", mAbout);
@@ -330,6 +335,10 @@ void Game::Initialize() {
 	btnDashboardLogout->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 
 	RepositionLobby();
+	InitDuelsInterface();
+	InitEventsInterface();
+	InitShopInterface();
+	InitProfileInterface();
 	//lan mode
 	wLanWindow = env->addWindow(Scale(220, 100, 800, 520), false, gDataManager->GetSysString(1200).data());
 	defaultStrings.emplace_back(wLanWindow, 1200);
@@ -3682,9 +3691,14 @@ void Game::ReloadElementsStrings() {
 	((irr::gui::CGUICustomTable*)roomListTable)->setColumnText(7, gDataManager->GetSysString(1988).data());
 	roomListTable->setColumnWidth(0, roomListTable->getColumnWidth(0));
 
-	mTopMenu->setItemText(0, gDataManager->GetSysString(2045).data()); //mRepositoriesInfo
-	mTopMenu->setItemText(1, gDataManager->GetSysString(1970).data()); //mAbout
-	mTopMenu->setItemText(2, gDataManager->GetSysString(2040).data()); //mVersion
+	mTopMenu->setItemText(0, L"  Lobby  ");
+	mTopMenu->setItemText(1, L"  Duelos  ");
+	mTopMenu->setItemText(2, L"  Eventos  ");
+	mTopMenu->setItemText(3, L"  Tienda  ");
+	mTopMenu->setItemText(4, L"  Perfil  ");
+	mTopMenu->setItemText(5, gDataManager->GetSysString(2045).data()); //mRepositoriesInfo
+	mTopMenu->setItemText(6, gDataManager->GetSysString(1970).data()); //mAbout
+	mTopMenu->setItemText(7, gDataManager->GetSysString(2040).data()); //mVersion
 	RefreshUICoreVersion();
 	stExpectedCoreVersion->setText(GetLocalizedExpectedCore().data());
 	stCompatVersion->setText(GetLocalizedCompatVersion().data());
@@ -4344,11 +4358,8 @@ void Game::PerformLogin(bool forceSession) {
 		ShowLoginPanel(false);
 		RepositionLobby();
 		UpdateDashboardStats();
-		wMainMenu->setVisible(true);
-		env->getRootGUIElement()->bringToFront(wMainMenu);
-		if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
-		if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
-		env->setFocus(wMainMenu);
+		UpdateProfileData();
+		SwitchMainView(VIEW_LOBBY);
 	} else if (res.code == 2) {
 		stLoginStatus->setText(L"Esta cuenta ya est\u00e1 activa en otro dispositivo.");
 		stLoginStatus->setOverrideColor(irr::video::SColor(255, 245, 190, 60));
@@ -4414,6 +4425,13 @@ void Game::PerformLogout() {
 	loggedEmail = L"";
 
 	wMainMenu->setVisible(false);
+	if (wDuelsWindow) wDuelsWindow->setVisible(false);
+	if (wEventsWindow) wEventsWindow->setVisible(false);
+	if (wShopWindow) wShopWindow->setVisible(false);
+	if (wShopPacksWindow) wShopPacksWindow->setVisible(false);
+	if (wShopAvatarsWindow) wShopAvatarsWindow->setVisible(false);
+	if (wShopBoostersWindow) wShopBoostersWindow->setVisible(false);
+	if (wProfileWindow) wProfileWindow->setVisible(false);
 	ShowLoginPanel(true);
 	SwitchLoginRegisterView(false);
 	CheckServerStatus();
@@ -4476,6 +4494,11 @@ void Game::RepositionLobby() {
 	if (mTopMenu) {
 		env->getRootGUIElement()->bringToFront(mTopMenu);
 	}
+
+	RepositionDuels();
+	RepositionEvents();
+	RepositionShop();
+	RepositionProfile();
 }
 
 void Game::UpdateDashboardStats() {
@@ -4521,4 +4544,518 @@ void Game::UpdateDashboardStats() {
 	}
 }
 
+void Game::SwitchMainView(int viewId) {
+	currentMainView = viewId;
+	if (wMainMenu) wMainMenu->setVisible(viewId == VIEW_LOBBY);
+	if (wDuelsWindow) wDuelsWindow->setVisible(viewId == VIEW_DUELS);
+	if (wEventsWindow) wEventsWindow->setVisible(viewId == VIEW_EVENTS);
+	if (wShopWindow) wShopWindow->setVisible(viewId == VIEW_SHOP);
+	if (wShopPacksWindow) wShopPacksWindow->setVisible(viewId == VIEW_SHOP_PACKS);
+	if (wShopAvatarsWindow) wShopAvatarsWindow->setVisible(viewId == VIEW_SHOP_AVATARS);
+	if (wShopBoostersWindow) wShopBoostersWindow->setVisible(viewId == VIEW_SHOP_BOOSTERS);
+	if (wProfileWindow) wProfileWindow->setVisible(viewId == VIEW_PROFILE);
+
+	switch (viewId) {
+	case VIEW_LOBBY:
+		UpdateDashboardStats();
+		RepositionLobby();
+		break;
+	case VIEW_DUELS:
+		RepositionDuels();
+		break;
+	case VIEW_EVENTS:
+		RepositionEvents();
+		break;
+	case VIEW_SHOP:
+	case VIEW_SHOP_PACKS:
+	case VIEW_SHOP_AVATARS:
+	case VIEW_SHOP_BOOSTERS:
+		RepositionShop();
+		break;
+	case VIEW_PROFILE:
+		UpdateProfileData();
+		RepositionProfile();
+		break;
+	}
+
+	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+	if (mTopMenu) env->getRootGUIElement()->bringToFront(mTopMenu);
 }
+
+void Game::InitDuelsInterface() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wDuelsWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wDuelsWindow->getCloseButton()->setVisible(false);
+	wDuelsWindow->setDraggable(false);
+	wDuelsWindow->setDrawBackground(false);
+	wDuelsWindow->setDrawTitlebar(false);
+	wDuelsWindow->setVisible(false);
+
+	stDuelsHeader = env->addStaticText(L"MODOS DE DUELO", Scale(40, 15, 600, 45), false, false, wDuelsWindow);
+	stDuelsHeader->setOverrideColor(irr::video::SColor(255, 100, 220, 255));
+	stDuelsSubheader = env->addStaticText(L"Selecciona la modalidad para ingresar a la arena de combate", Scale(40, 48, 600, 70), false, false, wDuelsWindow);
+	stDuelsSubheader->setOverrideColor(irr::video::SColor(255, 180, 200, 220));
+
+	// Card 1: Servidores Online
+	cardDuelOnline = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wDuelsWindow);
+	cardDuelOnline->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
+
+	auto txtBadge1 = env->addStaticText(L"● MULTIJUGADOR GLOBAL", Scale(20, 18, 340, 40), false, false, cardDuelOnline);
+	txtBadge1->setOverrideColor(irr::video::SColor(255, 60, 220, 240));
+
+	auto txtTitle1 = env->addStaticText(L"Servidores en Línea", Scale(20, 46, 340, 75), false, false, cardDuelOnline);
+	txtTitle1->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+
+	auto txtDesc1 = env->addStaticText(L"Conéctate al servidor de duelos de Ani-Dimension.\n\n"
+		L"• Salas competitivas, casuales y de torneo\n"
+		L"• Duelos individuales (Single), Match y Tag\n"
+		L"• Soporte oficial para banlists TCG / OCG\n"
+		L"• Servidor activo en puerto 7911", Scale(20, 85, 340, 250), false, true, cardDuelOnline);
+	txtDesc1->setOverrideColor(irr::video::SColor(255, 200, 215, 235));
+
+	btnDuelOnline = env->addButton(Scale(25, 270, 335, 315), cardDuelOnline, BUTTON_CARD_DUEL_ONLINE, L"ENTRAR A SERVIDORES");
+	if (tBtnLobbyNormal) btnDuelOnline->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnDuelOnline->setPressedImage(tBtnLobbyHover);
+	btnDuelOnline->setScaleImage(true);
+	btnDuelOnline->setUseAlphaChannel(true);
+	btnDuelOnline->setDrawBorder(false);
+	btnDuelOnline->setOverrideColor(irr::video::SColor(255, 220, 245, 255));
+
+	// Card 2: LAN & Bot IA
+	cardDuelBot = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wDuelsWindow);
+	cardDuelBot->setBackgroundColor(irr::video::SColor(220, 28, 22, 50));
+
+	auto txtBadge2 = env->addStaticText(L"● ENTRENAMIENTO & LOCAL", Scale(20, 18, 340, 40), false, false, cardDuelBot);
+	txtBadge2->setOverrideColor(irr::video::SColor(255, 240, 190, 70));
+
+	auto txtTitle2 = env->addStaticText(L"LAN & Bot Inteligencia Artificial", Scale(20, 46, 340, 75), false, false, cardDuelBot);
+	txtTitle2->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+
+	auto txtDesc2 = env->addStaticText(L"Perfecciona tus barajas y estrategias tácticas contra la máquina o amigos en red.\n\n"
+		L"• Motor inteligente WindBot integrado\n"
+		L"• Gran variedad de barajas y dificultades\n"
+		L"• Conexión por red local (LAN) directa\n"
+		L"• Pruebas de mano y jugadas en solitario", Scale(20, 85, 340, 250), false, true, cardDuelBot);
+	txtDesc2->setOverrideColor(irr::video::SColor(255, 225, 215, 235));
+
+	btnDuelBot = env->addButton(Scale(25, 270, 335, 315), cardDuelBot, BUTTON_CARD_DUEL_BOT, L"JUGAR VS BOT / LAN");
+	if (tBtnLobbyNormal) btnDuelBot->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnDuelBot->setPressedImage(tBtnLobbyHover);
+	btnDuelBot->setScaleImage(true);
+	btnDuelBot->setUseAlphaChannel(true);
+	btnDuelBot->setDrawBorder(false);
+	btnDuelBot->setOverrideColor(irr::video::SColor(255, 255, 240, 200));
+}
+
+void Game::RepositionDuels() {
+	if (!wDuelsWindow) return;
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wDuelsWindow->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
+
+	int availW = window_size.Width;
+	int cardW = Scale(360);
+	int cardH = Scale(330);
+	int gap = Scale(30);
+
+	if (availW < 2 * cardW + 3 * gap) {
+		cardW = (availW - Scale(60)) / 2;
+		if (cardW < Scale(280)) cardW = availW - Scale(40);
+	}
+
+	if (stDuelsHeader) stDuelsHeader->setRelativePosition(irr::core::recti(Scale(40), Scale(15), availW - Scale(40), Scale(45)));
+	if (stDuelsSubheader) stDuelsSubheader->setRelativePosition(irr::core::recti(Scale(40), Scale(46), availW - Scale(40), Scale(70)));
+
+	if (availW >= 2 * cardW + gap) {
+		int totalW = 2 * cardW + gap;
+		int startX = (availW - totalW) / 2;
+		int startY = Scale(85);
+		if (cardDuelOnline) cardDuelOnline->setRelativePosition(irr::core::recti(startX, startY, startX + cardW, startY + cardH));
+		if (cardDuelBot) cardDuelBot->setRelativePosition(irr::core::recti(startX + cardW + gap, startY, startX + 2 * cardW + gap, startY + cardH));
+	} else {
+		int startX = (availW - cardW) / 2;
+		if (cardDuelOnline) cardDuelOnline->setRelativePosition(irr::core::recti(startX, Scale(75), startX + cardW, Scale(75) + cardH));
+		if (cardDuelBot) cardDuelBot->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
+	}
+}
+
+void Game::InitEventsInterface() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wEventsWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wEventsWindow->getCloseButton()->setVisible(false);
+	wEventsWindow->setDraggable(false);
+	wEventsWindow->setDrawBackground(false);
+	wEventsWindow->setDrawTitlebar(false);
+	wEventsWindow->setVisible(false);
+
+	stEventsHeader = env->addStaticText(L"CENTRO DE EVENTOS & DESAFÍOS", Scale(40, 15, 600, 45), false, false, wEventsWindow);
+	stEventsHeader->setOverrideColor(irr::video::SColor(255, 255, 215, 80));
+	stEventsSubheader = env->addStaticText(L"Desafíos por tiempo limitado, retos tácticos y torneos de temporada", Scale(40, 48, 600, 70), false, false, wEventsWindow);
+	stEventsSubheader->setOverrideColor(irr::video::SColor(255, 200, 210, 220));
+
+	// Card: Rompecabezas (Puzzles)
+	cardEventPuzzle = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wEventsWindow);
+	cardEventPuzzle->setBackgroundColor(irr::video::SColor(220, 24, 20, 48));
+
+	auto txtBadge = env->addStaticText(L"● EVENTO DISPONIBLE", Scale(20, 18, 340, 40), false, false, cardEventPuzzle);
+	txtBadge->setOverrideColor(irr::video::SColor(255, 80, 230, 160));
+
+	auto txtTitle = env->addStaticText(L"Rompecabezas de Duelo (Puzzles)", Scale(20, 46, 340, 75), false, false, cardEventPuzzle);
+	txtTitle->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+
+	auto txtDesc = env->addStaticText(L"Demuestra tu intelecto y visión estratégica en los acertijos de duelo.\n\n"
+		L"• Resuelve escenarios límite en un solo turno\n"
+		L"• Más de 100 rompecabezas oficiales\n"
+		L"• Descubre combos y cadenas complejas\n"
+		L"• Desbloquea recompensas especiales", Scale(20, 85, 340, 250), false, true, cardEventPuzzle);
+	txtDesc->setOverrideColor(irr::video::SColor(255, 215, 225, 240));
+
+	btnEventPuzzle = env->addButton(Scale(25, 270, 335, 315), cardEventPuzzle, BUTTON_CARD_EVENT_PUZZLE, L"ABRIR ROMPECABEZAS");
+	if (tBtnLobbyNormal) btnEventPuzzle->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnEventPuzzle->setPressedImage(tBtnLobbyHover);
+	btnEventPuzzle->setScaleImage(true);
+	btnEventPuzzle->setUseAlphaChannel(true);
+	btnEventPuzzle->setDrawBorder(false);
+	btnEventPuzzle->setOverrideColor(irr::video::SColor(255, 220, 255, 240));
+
+	// Card: Torneos de Temporada
+	cardEventTournaments = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wEventsWindow);
+	cardEventTournaments->setBackgroundColor(irr::video::SColor(190, 20, 22, 35));
+
+	auto txtBadge2 = env->addStaticText(L"● PRÓXIMAMENTE", Scale(20, 18, 340, 40), false, false, cardEventTournaments);
+	txtBadge2->setOverrideColor(irr::video::SColor(255, 140, 160, 180));
+
+	auto txtTitle2 = env->addStaticText(L"Torneo Ani-Dimension Cup", Scale(20, 46, 340, 75), false, false, cardEventTournaments);
+	txtTitle2->setOverrideColor(irr::video::SColor(255, 200, 210, 220));
+
+	auto txtDesc2 = env->addStaticText(L"El mayor torneo interdimensional competitivo se aproxima.\n\n"
+		L"• Rondas suizas y fase final eliminatoria\n"
+		L"• Tablas de clasificación global en vivo\n"
+		L"• Premios exclusivos en Oro, Gemas y Títulos\n"
+		L"• Próxima apertura de inscripciones", Scale(20, 85, 340, 250), false, true, cardEventTournaments);
+	txtDesc2->setOverrideColor(irr::video::SColor(255, 160, 175, 195));
+
+	btnEventTournaments = env->addButton(Scale(25, 270, 335, 315), cardEventTournaments, -1, L"EN PREPARACIÓN");
+	btnEventTournaments->setEnabled(false);
+}
+
+void Game::RepositionEvents() {
+	if (!wEventsWindow) return;
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wEventsWindow->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
+
+	int availW = window_size.Width;
+	int cardW = Scale(360);
+	int cardH = Scale(330);
+	int gap = Scale(30);
+
+	if (stEventsHeader) stEventsHeader->setRelativePosition(irr::core::recti(Scale(40), Scale(15), availW - Scale(40), Scale(45)));
+	if (stEventsSubheader) stEventsSubheader->setRelativePosition(irr::core::recti(Scale(40), Scale(46), availW - Scale(40), Scale(70)));
+
+	if (availW >= 2 * cardW + gap) {
+		int totalW = 2 * cardW + gap;
+		int startX = (availW - totalW) / 2;
+		int startY = Scale(85);
+		if (cardEventPuzzle) cardEventPuzzle->setRelativePosition(irr::core::recti(startX, startY, startX + cardW, startY + cardH));
+		if (cardEventTournaments) cardEventTournaments->setRelativePosition(irr::core::recti(startX + cardW + gap, startY, startX + 2 * cardW + gap, startY + cardH));
+	} else {
+		int startX = (availW - cardW) / 2;
+		if (cardEventPuzzle) cardEventPuzzle->setRelativePosition(irr::core::recti(startX, Scale(75), startX + cardW, Scale(75) + cardH));
+		if (cardEventTournaments) cardEventTournaments->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
+	}
+}
+
+void Game::InitShopInterface() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wShopWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wShopWindow->getCloseButton()->setVisible(false);
+	wShopWindow->setDraggable(false);
+	wShopWindow->setDrawBackground(false);
+	wShopWindow->setDrawTitlebar(false);
+	wShopWindow->setVisible(false);
+
+	stShopHeader = env->addStaticText(L"TIENDA ANI-DIMENSION", Scale(40, 15, 600, 45), false, false, wShopWindow);
+	stShopHeader->setOverrideColor(irr::video::SColor(255, 120, 240, 255));
+	stShopWallet = env->addStaticText(L"Billetera: 🪙 2,500 Oro  |  💎 350 Gemas", Scale(40, 46, 600, 70), false, false, wShopWindow);
+	stShopWallet->setOverrideColor(irr::video::SColor(255, 255, 220, 100));
+
+	// Card 1: Sobres
+	cardShopPacks = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopPacks->setBackgroundColor(irr::video::SColor(220, 16, 32, 54));
+	auto txtBadgeP = env->addStaticText(L"● EXPANSIONES", Scale(15, 16, 245, 38), false, false, cardShopPacks);
+	txtBadgeP->setOverrideColor(irr::video::SColor(255, 80, 200, 255));
+	auto txtTitleP = env->addStaticText(L"Sobres de Cartas", Scale(15, 42, 245, 70), false, false, cardShopPacks);
+	txtTitleP->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+	auto txtDescP = env->addStaticText(L"Adquiere sobres de cartas oficiales de cada generación.\n\n• Cartas Raras y Ultra Raras\n• Expansiones temáticas\n• Desbloqueo instantáneo", Scale(15, 80, 245, 250), false, true, cardShopPacks);
+	txtDescP->setOverrideColor(irr::video::SColor(255, 200, 220, 240));
+	btnShopPacks = env->addButton(Scale(20, 270, 240, 315), cardShopPacks, BUTTON_CARD_SHOP_PACKS, L"VER SOBRES");
+	if (tBtnLobbyNormal) btnShopPacks->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnShopPacks->setPressedImage(tBtnLobbyHover);
+	btnShopPacks->setScaleImage(true);
+	btnShopPacks->setUseAlphaChannel(true);
+	btnShopPacks->setDrawBorder(false);
+
+	// Card 2: Avatares
+	cardShopAvatars = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopAvatars->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
+	auto txtBadgeA = env->addStaticText(L"● PERSONALIZACIÓN", Scale(15, 16, 245, 38), false, false, cardShopAvatars);
+	txtBadgeA->setOverrideColor(irr::video::SColor(255, 220, 120, 255));
+	auto txtTitleA = env->addStaticText(L"Avatares & Títulos", Scale(15, 42, 245, 70), false, false, cardShopAvatars);
+	txtTitleA->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+	auto txtDescA = env->addStaticText(L"Personaliza tu perfil con retratos de duelistas legendarios.\n\n• Avatares animados\n• Marcos cromados y dorados\n• Títulos de honor para el chat", Scale(15, 80, 245, 250), false, true, cardShopAvatars);
+	txtDescA->setOverrideColor(irr::video::SColor(255, 230, 210, 245));
+	btnShopAvatars = env->addButton(Scale(20, 270, 240, 315), cardShopAvatars, BUTTON_CARD_SHOP_AVATARS, L"VER AVATARES");
+	if (tBtnLobbyNormal) btnShopAvatars->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnShopAvatars->setPressedImage(tBtnLobbyHover);
+	btnShopAvatars->setScaleImage(true);
+	btnShopAvatars->setUseAlphaChannel(true);
+	btnShopAvatars->setDrawBorder(false);
+
+	// Card 3: Potenciadores
+	cardShopBoosters = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopBoosters->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
+	auto txtBadgeB = env->addStaticText(L"● MEJORAS & BUFFS", Scale(15, 16, 245, 38), false, false, cardShopBoosters);
+	txtBadgeB->setOverrideColor(irr::video::SColor(255, 100, 240, 150));
+	auto txtTitleB = env->addStaticText(L"Potenciadores", Scale(15, 42, 245, 70), false, false, cardShopBoosters);
+	txtTitleB->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+	auto txtDescB = env->addStaticText(L"Aumenta exponencialmente las recompensas de tus victorias.\n\n• Multiplicador de EXP x2 (24h)\n• Multiplicador de Oro x2 (24h)\n• Pases de temporada activa", Scale(15, 80, 245, 250), false, true, cardShopBoosters);
+	txtDescB->setOverrideColor(irr::video::SColor(255, 210, 240, 225));
+	btnShopBoosters = env->addButton(Scale(20, 270, 240, 315), cardShopBoosters, BUTTON_CARD_SHOP_BOOSTERS, L"VER POTENCIADORES");
+	if (tBtnLobbyNormal) btnShopBoosters->setImage(tBtnLobbyNormal);
+	if (tBtnLobbyHover) btnShopBoosters->setPressedImage(tBtnLobbyHover);
+	btnShopBoosters->setScaleImage(true);
+	btnShopBoosters->setUseAlphaChannel(true);
+	btnShopBoosters->setDrawBorder(false);
+
+	// --- Sub-interfaces for Shop ---
+	// 1. Packs Window
+	wShopPacksWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wShopPacksWindow->getCloseButton()->setVisible(false);
+	wShopPacksWindow->setDraggable(false);
+	wShopPacksWindow->setDrawBackground(false);
+	wShopPacksWindow->setDrawTitlebar(false);
+	wShopPacksWindow->setVisible(false);
+
+	auto stPacksTitle = env->addStaticText(L"TIENDA - SOBRES DE EXPANSIÓN", Scale(40, 15, 600, 45), false, false, wShopPacksWindow);
+	stPacksTitle->setOverrideColor(irr::video::SColor(255, 100, 220, 255));
+
+	auto cardP1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopPacksWindow);
+	cardP1->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
+	auto txtP1 = env->addStaticText(L"🌟 Sobre Génesis del Duelo\n\nContiene 9 cartas exclusivas.\nGarantiza 1 carta Ultra Rara o Secreta.\n\nPrecio: 100 Gemas", Scale(15, 15, 285, 180), false, true, cardP1);
+	txtP1->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
+	auto btnBuyP1 = env->addButton(Scale(20, 200, 280, 245), cardP1, BUTTON_BUY_PACK_1, L"COMPRAR (100 💎)");
+	if (tBtnLobbyNormal) btnBuyP1->setImage(tBtnLobbyNormal);
+	btnBuyP1->setScaleImage(true);
+
+	auto cardP2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopPacksWindow);
+	cardP2->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
+	auto txtP2 = env->addStaticText(L"🌑 Sobre Dimensión Oscura\n\nExpansión temática de monstruos OSCURIDAD.\nAlta probabilidad de invocaciones especiales.\n\nPrecio: 500 Oro", Scale(15, 15, 285, 180), false, true, cardP2);
+	txtP2->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
+	auto btnBuyP2 = env->addButton(Scale(20, 200, 280, 245), cardP2, BUTTON_BUY_PACK_2, L"COMPRAR (500 🪙)");
+	if (tBtnLobbyNormal) btnBuyP2->setImage(tBtnLobbyNormal);
+	btnBuyP2->setScaleImage(true);
+
+	btnShopPacksBack = env->addButton(Scale(40, 335, 240, 375), wShopPacksWindow, BUTTON_SHOP_BACK, L"⬅ VOLVER A LA TIENDA");
+	if (tBtnLobbyExit) btnShopPacksBack->setImage(tBtnLobbyExit);
+	btnShopPacksBack->setScaleImage(true);
+
+	// 2. Avatars Window
+	wShopAvatarsWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wShopAvatarsWindow->getCloseButton()->setVisible(false);
+	wShopAvatarsWindow->setDraggable(false);
+	wShopAvatarsWindow->setDrawBackground(false);
+	wShopAvatarsWindow->setDrawTitlebar(false);
+	wShopAvatarsWindow->setVisible(false);
+
+	auto stAvatarsTitle = env->addStaticText(L"TIENDA - AVATARES EXCLUSIVOS", Scale(40, 15, 600, 45), false, false, wShopAvatarsWindow);
+	stAvatarsTitle->setOverrideColor(irr::video::SColor(255, 220, 120, 255));
+
+	auto cardA1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopAvatarsWindow);
+	cardA1->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
+	auto txtA1 = env->addStaticText(L"👑 Avatar Faraón Supremo\n\nAvatar mítico con marco holográfico dorado y título de perfil 'Rey del Duelo'.\n\nPrecio: 250 Gemas", Scale(15, 15, 285, 180), false, true, cardA1);
+	txtA1->setOverrideColor(irr::video::SColor(255, 240, 220, 255));
+	auto btnBuyA1 = env->addButton(Scale(20, 200, 280, 245), cardA1, BUTTON_BUY_AVATAR_1, L"DESBLOQUEAR (250 💎)");
+	if (tBtnLobbyNormal) btnBuyA1->setImage(tBtnLobbyNormal);
+	btnBuyA1->setScaleImage(true);
+
+	auto cardA2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopAvatarsWindow);
+	cardA2->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
+	auto txtA2 = env->addStaticText(L"🐉 Avatar Señor del Dragón\n\nAvatar legendario de duelista dragón con bordes azules y efecto de aura reluciente.\n\nPrecio: 1,000 Oro", Scale(15, 15, 285, 180), false, true, cardA2);
+	txtA2->setOverrideColor(irr::video::SColor(255, 240, 220, 255));
+	auto btnBuyA2 = env->addButton(Scale(20, 200, 280, 245), cardA2, BUTTON_BUY_AVATAR_2, L"DESBLOQUEAR (1,000 🪙)");
+	if (tBtnLobbyNormal) btnBuyA2->setImage(tBtnLobbyNormal);
+	btnBuyA2->setScaleImage(true);
+
+	btnShopAvatarsBack = env->addButton(Scale(40, 335, 240, 375), wShopAvatarsWindow, BUTTON_SHOP_BACK, L"⬅ VOLVER A LA TIENDA");
+	if (tBtnLobbyExit) btnShopAvatarsBack->setImage(tBtnLobbyExit);
+	btnShopAvatarsBack->setScaleImage(true);
+
+	// 3. Boosters Window
+	wShopBoostersWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wShopBoostersWindow->getCloseButton()->setVisible(false);
+	wShopBoostersWindow->setDraggable(false);
+	wShopBoostersWindow->setDrawBackground(false);
+	wShopBoostersWindow->setDrawTitlebar(false);
+	wShopBoostersWindow->setVisible(false);
+
+	auto stBoostersTitle = env->addStaticText(L"TIENDA - POTENCIADORES DE JUEGO", Scale(40, 15, 600, 45), false, false, wShopBoostersWindow);
+	stBoostersTitle->setOverrideColor(irr::video::SColor(255, 100, 240, 150));
+
+	auto cardB1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopBoostersWindow);
+	cardB1->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
+	auto txtB1 = env->addStaticText(L"⚡ Potenciador EXP x2 (24h)\n\nDuplica los puntos de experiencia obtenidos en todos los duelos durante 24 horas.\n\nPrecio: 50 Gemas", Scale(15, 15, 285, 180), false, true, cardB1);
+	txtB1->setOverrideColor(irr::video::SColor(255, 220, 255, 235));
+	auto btnBuyB1 = env->addButton(Scale(20, 200, 280, 245), cardB1, BUTTON_BUY_BOOSTER_1, L"ACTIVAR (50 💎)");
+	if (tBtnLobbyNormal) btnBuyB1->setImage(tBtnLobbyNormal);
+	btnBuyB1->setScaleImage(true);
+
+	auto cardB2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopBoostersWindow);
+	cardB2->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
+	auto txtB2 = env->addStaticText(L"🪙 Potenciador Oro x2 (24h)\n\nDuplica las recompensas en oro ganadas al vencer duelistas e IA durante 24 horas.\n\nPrecio: 200 Oro", Scale(15, 15, 285, 180), false, true, cardB2);
+	txtB2->setOverrideColor(irr::video::SColor(255, 220, 255, 235));
+	auto btnBuyB2 = env->addButton(Scale(20, 200, 280, 245), cardB2, BUTTON_BUY_BOOSTER_2, L"ACTIVAR (200 🪙)");
+	if (tBtnLobbyNormal) btnBuyB2->setImage(tBtnLobbyNormal);
+	btnBuyB2->setScaleImage(true);
+
+	btnShopBoostersBack = env->addButton(Scale(40, 335, 240, 375), wShopBoostersWindow, BUTTON_SHOP_BACK, L"⬅ VOLVER A LA TIENDA");
+	if (tBtnLobbyExit) btnShopBoostersBack->setImage(tBtnLobbyExit);
+	btnShopBoostersBack->setScaleImage(true);
+}
+
+void Game::RepositionShop() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	irr::core::recti fullWin(0, topY, window_size.Width, bottomY);
+	if (wShopWindow) wShopWindow->setRelativePosition(fullWin);
+	if (wShopPacksWindow) wShopPacksWindow->setRelativePosition(fullWin);
+	if (wShopAvatarsWindow) wShopAvatarsWindow->setRelativePosition(fullWin);
+	if (wShopBoostersWindow) wShopBoostersWindow->setRelativePosition(fullWin);
+
+	int availW = window_size.Width;
+	int cardW = Scale(260);
+	int cardH = Scale(330);
+	int gap = Scale(20);
+
+	if (stShopHeader) stShopHeader->setRelativePosition(irr::core::recti(Scale(40), Scale(15), availW - Scale(40), Scale(45)));
+	if (stShopWallet) stShopWallet->setRelativePosition(irr::core::recti(Scale(40), Scale(46), availW - Scale(40), Scale(70)));
+
+	if (availW >= 3 * cardW + 2 * gap) {
+		int totalW = 3 * cardW + 2 * gap;
+		int startX = (availW - totalW) / 2;
+		int startY = Scale(85);
+		if (cardShopPacks) cardShopPacks->setRelativePosition(irr::core::recti(startX, startY, startX + cardW, startY + cardH));
+		if (cardShopAvatars) cardShopAvatars->setRelativePosition(irr::core::recti(startX + cardW + gap, startY, startX + 2 * cardW + gap, startY + cardH));
+		if (cardShopBoosters) cardShopBoosters->setRelativePosition(irr::core::recti(startX + 2 * (cardW + gap), startY, startX + 3 * cardW + 2 * gap, startY + cardH));
+	} else {
+		int startX = (availW - cardW) / 2;
+		if (cardShopPacks) cardShopPacks->setRelativePosition(irr::core::recti(startX, Scale(75), startX + cardW, Scale(75) + cardH));
+		if (cardShopAvatars) cardShopAvatars->setRelativePosition(irr::core::recti(startX, Scale(85) + cardH, startX + cardW, Scale(85) + 2 * cardH));
+		if (cardShopBoosters) cardShopBoosters->setRelativePosition(irr::core::recti(startX, Scale(95) + 2 * cardH, startX + cardW, Scale(95) + 3 * cardH));
+	}
+}
+
+void Game::InitProfileInterface() {
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wProfileWindow = env->addWindow(irr::core::recti(0, topY, window_size.Width, bottomY), false, L"");
+	wProfileWindow->getCloseButton()->setVisible(false);
+	wProfileWindow->setDraggable(false);
+	wProfileWindow->setDrawBackground(false);
+	wProfileWindow->setDrawTitlebar(false);
+	wProfileWindow->setVisible(false);
+
+	stProfileHeader = env->addStaticText(L"PERFIL DEL DUELISTA", Scale(40, 15, 600, 45), false, false, wProfileWindow);
+	stProfileHeader->setOverrideColor(irr::video::SColor(255, 140, 220, 255));
+
+	// Left: Identidad
+	panelProfileUserCard = env->addStaticText(L"", Scale(40, 60, 360, 360), true, true, wProfileWindow);
+	panelProfileUserCard->setBackgroundColor(irr::video::SColor(220, 20, 26, 44));
+
+	auto avatarFrame = env->addStaticText(L"👤\nDUELISTA", Scale(20, 20, 110, 110), true, true, panelProfileUserCard);
+	avatarFrame->setBackgroundColor(irr::video::SColor(255, 30, 40, 65));
+	avatarFrame->setOverrideColor(irr::video::SColor(255, 100, 220, 255));
+
+	stProfileUserName = env->addStaticText(L"Duelista: ---", Scale(125, 25, 335, 50), false, false, panelProfileUserCard);
+	stProfileUserName->setOverrideColor(irr::video::SColor(255, 255, 255, 255));
+
+	stProfileUserEmail = env->addStaticText(L"Email: ---", Scale(125, 52, 335, 75), false, false, panelProfileUserCard);
+	stProfileUserEmail->setOverrideColor(irr::video::SColor(255, 180, 200, 220));
+
+	stProfileUserRole = env->addStaticText(L"Rol: [ Usuario ]", Scale(125, 78, 335, 100), false, false, panelProfileUserCard);
+	stProfileUserRole->setOverrideColor(irr::video::SColor(255, 255, 215, 80));
+
+	stProfileUserCountry = env->addStaticText(L"País: 🇨🇴 Colombia", Scale(20, 125, 335, 150), false, false, panelProfileUserCard);
+	stProfileUserCountry->setOverrideColor(irr::video::SColor(255, 200, 220, 240));
+
+	auto badgeSec = env->addStaticText(L"ESTADO: ACTIVA & VERIFICADA\nConexión segura con SQL Server", Scale(20, 160, 335, 210), false, true, panelProfileUserCard);
+	badgeSec->setOverrideColor(irr::video::SColor(255, 80, 220, 150));
+
+	btnProfileRefresh = env->addButton(Scale(20, 235, 160, 275), panelProfileUserCard, BUTTON_PROFILE_REFRESH, L"🔄 ACTUALIZAR");
+	if (tBtnLobbyNormal) btnProfileRefresh->setImage(tBtnLobbyNormal);
+	btnProfileRefresh->setScaleImage(true);
+
+	btnProfileLogout = env->addButton(Scale(175, 235, 315, 275), panelProfileUserCard, BUTTON_PROFILE_LOGOUT, L"🚪 CERRAR SESIÓN");
+	if (tBtnLobbyExit) btnProfileLogout->setImage(tBtnLobbyExit);
+	btnProfileLogout->setScaleImage(true);
+
+	// Right: Stats
+	panelProfileStats = env->addStaticText(L"", Scale(380, 60, 740, 360), true, true, wProfileWindow);
+	panelProfileStats->setBackgroundColor(irr::video::SColor(220, 20, 26, 44));
+
+	stProfileUserStats = env->addStaticText(L"HISTORIAL Y ESTADÍSTICAS\n\n"
+		L"• Nivel de Duelista: 12 (EXP: 4,850 / 5,000)\n"
+		L"• Rango de Temporada: Duelista de Plata\n\n"
+		L"• Duelos Totales: 42\n"
+		L"• Victorias: 29  |  Derrotas: 13\n"
+		L"• Winrate Global: 69.0%\n\n"
+		L"• Oro Disponible: 🪙 2,500\n"
+		L"• Gemas Disponibles: 💎 350\n\n"
+		L"• Servidor Oficial: Ani-Dimension (127.0.0.1:7911)\n"
+		L"• Latencia / Ping: 12ms", Scale(25, 20, 335, 270), false, true, panelProfileStats);
+	stProfileUserStats->setOverrideColor(irr::video::SColor(255, 220, 235, 250));
+}
+
+void Game::RepositionProfile() {
+	if (!wProfileWindow) return;
+	int topY = Scale(28);
+	int bottomY = window_size.Height - Scale(45);
+	wProfileWindow->setRelativePosition(irr::core::recti(0, topY, window_size.Width, bottomY));
+
+	int availW = window_size.Width;
+	int panelW = Scale(350);
+	int panelH = Scale(300);
+	int gap = Scale(30);
+
+	if (stProfileHeader) stProfileHeader->setRelativePosition(irr::core::recti(Scale(40), Scale(15), availW - Scale(40), Scale(45)));
+
+	if (availW >= 2 * panelW + gap) {
+		int totalW = 2 * panelW + gap;
+		int startX = (availW - totalW) / 2;
+		int startY = Scale(60);
+		if (panelProfileUserCard) panelProfileUserCard->setRelativePosition(irr::core::recti(startX, startY, startX + panelW, startY + panelH));
+		if (panelProfileStats) panelProfileStats->setRelativePosition(irr::core::recti(startX + panelW + gap, startY, startX + 2 * panelW + gap, startY + panelH));
+	} else {
+		int startX = (availW - panelW) / 2;
+		if (panelProfileUserCard) panelProfileUserCard->setRelativePosition(irr::core::recti(startX, Scale(55), startX + panelW, Scale(55) + panelH));
+		if (panelProfileStats) panelProfileStats->setRelativePosition(irr::core::recti(startX, Scale(65) + panelH, startX + panelW, Scale(65) + 2 * panelH));
+	}
+}
+
+void Game::UpdateProfileData() {
+	if (stProfileUserName) {
+		stProfileUserName->setText((L"Duelista: " + (loggedUsername.empty() ? L"Invitado" : loggedUsername)).c_str());
+	}
+	if (stProfileUserEmail) {
+		stProfileUserEmail->setText((L"Email: " + (loggedEmail.empty() ? L"---" : loggedEmail)).c_str());
+	}
+	if (stProfileUserRole) {
+		std::wstring roleStr = (loggedUsername == L"Admin" || loggedUsername == L"admin") ? L"Rol: [ Administrador ]" : L"Rol: [ Duelista ]";
+		stProfileUserRole->setText(roleStr.c_str());
+	}
+}
+
+} // namespace ygo
