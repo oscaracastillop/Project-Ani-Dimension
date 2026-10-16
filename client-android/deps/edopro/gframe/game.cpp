@@ -100,11 +100,6 @@ Game::~Game() {
 }
 
 void Game::Initialize() {
-#if EDOPRO_ANDROID
-	if(gGameConfig->dpi_scale > 1.15f) {
-		gGameConfig->dpi_scale = 1.0f;
-	}
-#endif
 	dpi_scale = gGameConfig->dpi_scale;
 	duel_param = gGameConfig->lastDuelParam;
 	if(!device)
@@ -160,39 +155,21 @@ void Game::Initialize() {
 	env = device->getGUIEnvironment();
 	env->getRootGUIElement()->setRelativePosition({ {}, {(irr::s32)(1024 * dpi_scale), (irr::s32)(640 * dpi_scale) } });
 	auto textfont = gGameConfig->textfont;
-#if EDOPRO_ANDROID
-	if(textfont.size > 11)
-		textfont.size = 11;
-#endif
 	textfont.size = Scale(textfont.size);
 	auto fallbackFonts = gGameConfig->fallbackFonts;
-	for(auto& font : fallbackFonts) {
-#if EDOPRO_ANDROID
-		if(font.size > 11)
-			font.size = 11;
-#endif
+	for(auto& font : fallbackFonts)
 		font.size = Scale(font.size);
-	}
 	guiFont = irr::gui::CGUITTFont::createTTFont(env, textfont, fallbackFonts);
 	if(!guiFont)
 		throw std::runtime_error("Failed to load text font");
 	textFont = guiFont;
 	textFont->grab();
-#if EDOPRO_ANDROID
-	GameConfig::TextFont numfont{ gGameConfig->numfont, (uint8_t)Scale(14) };
-	numFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
-	numfont.size = Scale(11);
-	adFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
-	numfont.size = Scale(36);
-	lpcFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
-#else
 	GameConfig::TextFont numfont{ gGameConfig->numfont, (uint8_t)Scale(16) };
 	numFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
 	numfont.size = Scale(12);
 	adFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
 	numfont.size = Scale(48);
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
-#endif
 	if(!numFont || !adFont || !lpcFont)
 		throw std::runtime_error("Failed to load numbers font");
 	if(!ApplySkin(gGameConfig->skin, false, true)) {
@@ -4149,7 +4126,7 @@ void Game::InitializeLoginPanel() {
 
 	// Centered Cyber Frosted Glass Background Panel
 	if (texPanelBg) {
-		imgLoginBg = env->addImage(Scale(322, 55, 702, 585), env->getRootGUIElement(), -1, L"");
+		imgLoginBg = env->addImage(Scale(332, 45, 692, 505), env->getRootGUIElement(), -1, L"");
 		imgLoginBg->setImage(texPanelBg);
 		imgLoginBg->setScaleImage(true);
 		imgLoginBg->setUseAlphaChannel(true);
@@ -4492,7 +4469,7 @@ void Game::RepositionLobby() {
 		wBtnSettings->setRelativePosition(irr::core::recti(btnSetX, btnSetY, btnSetX + btnSetSize, btnSetY + btnSetSize));
 		if (btnSettings) {
 			btnSettings->setRelativePosition(irr::core::recti(0, 0, btnSetSize, btnSetSize));
-			btnSettings->setImageSize(irr::core::dimension2du(btnSetSize, btnSetSize));
+			btnSettings->setImageSize(irr::core::dimension2di(btnSetSize, btnSetSize));
 		}
 		env->getRootGUIElement()->bringToFront(wBtnSettings);
 	}

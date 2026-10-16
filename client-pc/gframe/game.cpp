@@ -4469,7 +4469,7 @@ void Game::RepositionLobby() {
 		wBtnSettings->setRelativePosition(irr::core::recti(btnSetX, btnSetY, btnSetX + btnSetSize, btnSetY + btnSetSize));
 		if (btnSettings) {
 			btnSettings->setRelativePosition(irr::core::recti(0, 0, btnSetSize, btnSetSize));
-			btnSettings->setImageSize(irr::core::dimension2du(btnSetSize, btnSetSize));
+			btnSettings->setImageSize(irr::core::dimension2di(btnSetSize, btnSetSize));
 		}
 		env->getRootGUIElement()->bringToFront(wBtnSettings);
 	}

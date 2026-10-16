@@ -133,44 +133,91 @@ BEGIN
 END
 GO
 
--- 6. Creación de Cuenta Administrador
+-- 6. Creación y Actualización de Cuentas Iniciales
 DECLARE @IdPaisDefault INT;
 SELECT TOP 1 @IdPaisDefault = IdPais FROM Paises WHERE CodigoISO = 'CO';
 IF @IdPaisDefault IS NULL
     SELECT TOP 1 @IdPaisDefault = IdPais FROM Paises;
 
+-- Eliminar usuario yugi_moto si existe
+DELETE FROM UsuariosRoles WHERE IdUsuario IN (SELECT IdUsuario FROM Usuarios WHERE Usuario LIKE '%yugi%');
+DELETE FROM Usuarios WHERE Usuario LIKE '%yugi%';
+
+-- Admin (Password: Admin123)
 IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE Usuario = 'Admin')
 BEGIN
     INSERT INTO Usuarios (Usuario, Email, PasswordHash, IdPais, FechaRegistro, Activo, EstaConectado)
-    VALUES ('Admin', 'admin@anidimension.com', 'a44abf53877b806e09e57a0236aa5c30ee0fc6aeb0a140e9c32cd2e0eb4a5dbb', @IdPaisDefault, GETDATE(), 1, 0);
+    VALUES ('Admin', 'admin@anidimension.com', '3b612c75a7b5048a435fb6ec81e52ff92d6d795a8b5a9c17070f6a63c97a53b2', @IdPaisDefault, GETDATE(), 1, 0);
 
     DECLARE @AdminId INT = SCOPE_IDENTITY();
     DECLARE @AdminRoleId INT;
     SELECT @AdminRoleId = IdRol FROM Roles WHERE NombreRol = 'Admin';
 
     IF NOT EXISTS (SELECT 1 FROM UsuariosRoles WHERE IdUsuario = @AdminId AND IdRol = @AdminRoleId)
-    BEGIN
         INSERT INTO UsuariosRoles (IdUsuario, IdRol) VALUES (@AdminId, @AdminRoleId);
-    END
 END
 ELSE
 BEGIN
-    -- Asegurar que la cuenta Admin tenga el hash correcto de Oscar1982 y el rol Admin asignado
     UPDATE Usuarios 
-    SET PasswordHash = 'a44abf53877b806e09e57a0236aa5c30ee0fc6aeb0a140e9c32cd2e0eb4a5dbb',
+    SET PasswordHash = '3b612c75a7b5048a435fb6ec81e52ff92d6d795a8b5a9c17070f6a63c97a53b2',
+        Email = 'admin@anidimension.com',
         Activo = 1
     WHERE Usuario = 'Admin';
-
-    DECLARE @ExistingAdminId INT;
-    SELECT @ExistingAdminId = IdUsuario FROM Usuarios WHERE Usuario = 'Admin';
-    DECLARE @RolIdAdmin INT;
-    SELECT @RolIdAdmin = IdRol FROM Roles WHERE NombreRol = 'Admin';
-
-    IF NOT EXISTS (SELECT 1 FROM UsuariosRoles WHERE IdUsuario = @ExistingAdminId AND IdRol = @RolIdAdmin)
-    BEGIN
-        INSERT INTO UsuariosRoles (IdUsuario, IdRol) VALUES (@ExistingAdminId, @RolIdAdmin);
-    END
 END
+
+-- Oscar (Password: 123456)
+IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE Usuario = 'Oscar')
+BEGIN
+    INSERT INTO Usuarios (Usuario, Email, PasswordHash, IdPais, FechaRegistro, Activo, EstaConectado)
+    VALUES ('Oscar', 'oscar@anidimension.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', @IdPaisDefault, GETDATE(), 1, 0);
+END
+ELSE
+BEGIN
+    UPDATE Usuarios 
+    SET PasswordHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
+        Email = 'oscar@anidimension.com',
+        Activo = 1
+    WHERE Usuario = 'Oscar';
+END
+
+-- Yuli (Password: 123456)
+IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE Usuario = 'Yuli')
+BEGIN
+    INSERT INTO Usuarios (Usuario, Email, PasswordHash, IdPais, FechaRegistro, Activo, EstaConectado)
+    VALUES ('Yuli', 'yuli@anidimension.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', @IdPaisDefault, GETDATE(), 1, 0);
+END
+ELSE
+BEGIN
+    UPDATE Usuarios 
+    SET PasswordHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
+        Email = 'yuli@anidimension.com',
+        Activo = 1
+    WHERE Usuario = 'Yuli';
+END
+
+-- Sofia (Password: 123456)
+IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE Usuario = 'Sofia')
+BEGIN
+    INSERT INTO Usuarios (Usuario, Email, PasswordHash, IdPais, FechaRegistro, Activo, EstaConectado)
+    VALUES ('Sofia', 'sofia@anidimension.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', @IdPaisDefault, GETDATE(), 1, 0);
+END
+ELSE
+BEGIN
+    UPDATE Usuarios 
+    SET PasswordHash = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92',
+        Email = 'sofia@anidimension.com',
+        Activo = 1
+    WHERE Usuario = 'Sofia';
+END
+
+-- Asignar rol de Usuario a Oscar, Yuli, Sofia
+DECLARE @UserRoleId INT;
+SELECT @UserRoleId = IdRol FROM Roles WHERE NombreRol = 'Usuario';
+INSERT INTO UsuariosRoles (IdUsuario, IdRol)
+SELECT u.IdUsuario, @UserRoleId
+FROM Usuarios u
+WHERE u.Usuario IN ('Oscar', 'Yuli', 'Sofia')
+  AND NOT EXISTS (SELECT 1 FROM UsuariosRoles ur WHERE ur.IdUsuario = u.IdUsuario);
 GO
 
 -- ==============================================================
