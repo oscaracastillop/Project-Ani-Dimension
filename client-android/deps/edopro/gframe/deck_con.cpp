@@ -97,7 +97,7 @@ void DeckBuilder::Terminate(bool showmenu) {
 	mainGame->is_siding = false;
 	if(showmenu) {
 		mainGame->ClearCardInfo();
-		mainGame->mTopMenu->setVisible(true);
+		if (mainGame->mTopMenu) mainGame->mTopMenu->setVisible(false);
 	}
 	mainGame->wDeckEdit->setVisible(false);
 	mainGame->wCategories->setVisible(false);
@@ -107,10 +107,10 @@ void DeckBuilder::Terminate(bool showmenu) {
 		mainGame->wCardImg->setVisible(false);
 		mainGame->wInfos->setVisible(false);
 		mainGame->btnLeaveGame->setVisible(false);
-		mainGame->PopupElement(mainGame->wMainMenu);
 		mainGame->ClearTextures();
 		mainGame->ClearCardInfo(0);
 		gdeckManager->ClearDummies();
+		mainGame->SwitchMainView(VIEW_LOBBY);
 	}
 	mainGame->btnHandTest->setVisible(false);
 	mainGame->btnHandTestSettings->setVisible(false);

@@ -273,7 +273,7 @@ void Game::Initialize() {
 	wMainMenu->setDrawBackground(false);
 	wMainMenu->setDrawTitlebar(false);
 
-	// 9 Modular Lobby Buttons
+	// 10 Modular Lobby Buttons (2 balanced columns of 5)
 	btnLobbyDuels = env->addButton(Scale(60, 140, 260, 184), wMainMenu, BUTTON_LOBBY_DUELS, L"⚔  DUELOS");
 	btnLobbyDeck = env->addButton(Scale(60, 196, 260, 240), wMainMenu, BUTTON_LOBBY_DECK, L"🃏  EDITOR DE DECKS");
 	btnLobbyCatalog = env->addButton(Scale(60, 252, 260, 296), wMainMenu, BUTTON_LOBBY_CATALOG, L"📖  CATÁLOGO CARTAS");
@@ -284,6 +284,7 @@ void Game::Initialize() {
 	btnLobbyEvents = env->addButton(Scale(275, 196, 475, 240), wMainMenu, BUTTON_LOBBY_EVENTS, L"🧩  EVENTOS");
 	btnLobbyRanking = env->addButton(Scale(275, 252, 475, 296), wMainMenu, BUTTON_LOBBY_RANKING, L"🏆  RANKING");
 	btnLobbyProfile = env->addButton(Scale(275, 308, 475, 352), wMainMenu, BUTTON_LOBBY_PROFILE, L"👤  PERFIL");
+	btnLobbySettings = env->addButton(Scale(275, 364, 475, 408), wMainMenu, BUTTON_LOBBY_SETTINGS, L"⚙  CONFIGURACIÓN");
 
 	// Legacy pointers for engine compatibility
 	btnOnlineMode = btnLobbyDuels;
@@ -295,7 +296,7 @@ void Game::Initialize() {
 
 	std::vector<irr::gui::IGUIButton*> allLobbyBtns = {
 		btnLobbyDuels, btnLobbyDeck, btnLobbyCatalog, btnLobbyShop,
-		btnLobbyReplay, btnLobbyEvents, btnLobbyRanking, btnLobbyProfile
+		btnLobbyReplay, btnLobbyEvents, btnLobbyRanking, btnLobbyProfile, btnLobbySettings
 	};
 	for (auto* btn : allLobbyBtns) {
 		if (!btn) continue;
@@ -361,10 +362,6 @@ void Game::Initialize() {
 	btnDashboardLogout->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 
 	RepositionLobby();
-	InitDuelsInterface();
-	InitEventsInterface();
-	InitShopInterface();
-	InitProfileInterface();
 	//lan mode
 	wLanWindow = env->addWindow(Scale(220, 100, 800, 520), false, gDataManager->GetSysString(1200).data());
 	defaultStrings.emplace_back(wLanWindow, 1200);
@@ -436,6 +433,7 @@ void Game::Initialize() {
 	wBtnSettings->setDraggable(false);
 	wBtnSettings->setDrawTitlebar(false);
 	wBtnSettings->setDrawBackground(false);
+	wBtnSettings->setVisible(false);
 	auto dimBtnSettings = Scale(0, 0, 30, 30);
 	btnSettings = irr::gui::CGUIImageButton::addImageButton(env, dimBtnSettings, wBtnSettings, BUTTON_SHOW_SETTINGS);
 	btnSettings->setDrawBorder(false);
@@ -1184,8 +1182,9 @@ void Game::Initialize() {
 	InitShopInterface();
 	InitProfileInterface();
 	InitRankingInterface();
+	ReloadAniDimensionStrings();
 	if (wTopBarMarquee) env->getRootGUIElement()->bringToFront(wTopBarMarquee);
-	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+	if (wBtnSettings) wBtnSettings->setVisible(false);
 }
 
 void Game::LoadCore() {
@@ -2243,7 +2242,7 @@ bool Game::MainLoop() {
 			fpsCounter->setRelativePosition(Resize(1024 - fpsCounterWidth, 620, 1024, 640));
 		}
 		UpdateMarquee((float)delta_time / 1000.0f);
-		wBtnSettings->setVisible(!(is_building || is_siding || dInfo.isInDuel || open_file));
+		wBtnSettings->setVisible(false);
 		DrawGUI();
 		DrawSpec();
 		if(cardimagetextureloading) {
@@ -3640,6 +3639,7 @@ void Game::ReloadElementsStrings() {
 	for(auto& elem : defaultStrings) {
 		elem.first->setText(gDataManager->GetSysString(elem.second).data());
 	}
+	ReloadAniDimensionStrings();
 
 	size_t nullLFlist = gdeckManager->_lfList.size() - 1;
 	gdeckManager->_lfList[nullLFlist].listName = gDataManager->GetSysString(1442).data();
@@ -4503,6 +4503,7 @@ void Game::RepositionLobby() {
 	if (btnLobbyEvents) btnLobbyEvents->setRelativePosition(irr::core::recti(startX2, relStartY + (btnHeight + gapY), startX2 + btnWidth, relStartY + 2 * btnHeight + gapY));
 	if (btnLobbyRanking) btnLobbyRanking->setRelativePosition(irr::core::recti(startX2, relStartY + 2 * (btnHeight + gapY), startX2 + btnWidth, relStartY + 3 * btnHeight + 2 * gapY));
 	if (btnLobbyProfile) btnLobbyProfile->setRelativePosition(irr::core::recti(startX2, relStartY + 3 * (btnHeight + gapY), startX2 + btnWidth, relStartY + 4 * btnHeight + 3 * gapY));
+	if (btnLobbySettings) btnLobbySettings->setRelativePosition(irr::core::recti(startX2, relStartY + 4 * (btnHeight + gapY), startX2 + btnWidth, relStartY + 5 * btnHeight + 4 * gapY));
 
 	// Dashboard on the right
 	if (wDashboard) {
@@ -4528,15 +4529,7 @@ void Game::RepositionLobby() {
 		env->getRootGUIElement()->bringToFront(wTopBarMarquee);
 	}
 	if (wBtnSettings) {
-		int btnSetSize = Scale(24);
-		int btnSetX = window_size.Width - btnSetSize - Scale(6);
-		int btnSetY = Scale(2);
-		wBtnSettings->setRelativePosition(irr::core::recti(btnSetX, btnSetY, btnSetX + btnSetSize, btnSetY + btnSetSize));
-		if (btnSettings) {
-			btnSettings->setRelativePosition(irr::core::recti(0, 0, btnSetSize, btnSetSize));
-			btnSettings->setImageSize(irr::core::dimension2di(btnSetSize, btnSetSize));
-		}
-		env->getRootGUIElement()->bringToFront(wBtnSettings);
+		wBtnSettings->setVisible(false);
 	}
 
 	RepositionDuels();
@@ -4601,6 +4594,13 @@ void Game::SwitchMainView(int viewId) {
 	if (wProfileWindow) wProfileWindow->setVisible(viewId == VIEW_PROFILE);
 	if (wRankingWindow) wRankingWindow->setVisible(viewId == VIEW_RANKING);
 
+	// Hide secondary/modal popups to eliminate orphan/ghost windows
+	if (wRoomListPlaceholder) wRoomListPlaceholder->setVisible(false);
+	if (wLanWindow) wLanWindow->setVisible(false);
+	if (wSinglePlay) wSinglePlay->setVisible(false);
+	if (wCreateHost) wCreateHost->setVisible(false);
+	if (wReplay) wReplay->setVisible(false);
+
 	switch (viewId) {
 	case VIEW_LOBBY:
 		UpdateDashboardStats();
@@ -4631,7 +4631,7 @@ void Game::SwitchMainView(int viewId) {
 		wTopBarMarquee->setVisible(true);
 		env->getRootGUIElement()->bringToFront(wTopBarMarquee);
 	}
-	if (wBtnSettings) env->getRootGUIElement()->bringToFront(wBtnSettings);
+	if (wBtnSettings) wBtnSettings->setVisible(false);
 }
 
 void Game::InitDuelsInterface() {
@@ -4650,7 +4650,7 @@ void Game::InitDuelsInterface() {
 	stDuelsSubheader->setOverrideColor(irr::video::SColor(255, 180, 200, 220));
 
 	// Card 1: Servidores Online
-	cardDuelOnline = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wDuelsWindow);
+	cardDuelOnline = env->addStaticText(L"", Scale(0, 0, 360, 340), false, true, wDuelsWindow);
 	cardDuelOnline->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
 
 	auto txtBadge1 = env->addStaticText(L"● MULTIJUGADOR GLOBAL", Scale(20, 18, 340, 40), false, false, cardDuelOnline);
@@ -4675,7 +4675,7 @@ void Game::InitDuelsInterface() {
 	btnDuelOnline->setOverrideColor(irr::video::SColor(255, 220, 245, 255));
 
 	// Card 2: LAN & Bot IA
-	cardDuelBot = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wDuelsWindow);
+	cardDuelBot = env->addStaticText(L"", Scale(0, 0, 360, 340), false, true, wDuelsWindow);
 	cardDuelBot->setBackgroundColor(irr::video::SColor(220, 28, 22, 50));
 
 	auto txtBadge2 = env->addStaticText(L"● ENTRENAMIENTO & LOCAL", Scale(20, 18, 340, 40), false, false, cardDuelBot);
@@ -4757,7 +4757,7 @@ void Game::InitEventsInterface() {
 	stEventsSubheader->setOverrideColor(irr::video::SColor(255, 200, 210, 220));
 
 	// Card: Rompecabezas (Puzzles)
-	cardEventPuzzle = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wEventsWindow);
+	cardEventPuzzle = env->addStaticText(L"", Scale(0, 0, 360, 340), false, true, wEventsWindow);
 	cardEventPuzzle->setBackgroundColor(irr::video::SColor(220, 24, 20, 48));
 
 	auto txtBadge = env->addStaticText(L"● EVENTO DISPONIBLE", Scale(20, 18, 340, 40), false, false, cardEventPuzzle);
@@ -4782,7 +4782,7 @@ void Game::InitEventsInterface() {
 	btnEventPuzzle->setOverrideColor(irr::video::SColor(255, 220, 255, 240));
 
 	// Card: Torneos de Temporada
-	cardEventTournaments = env->addStaticText(L"", Scale(0, 0, 360, 340), true, true, wEventsWindow);
+	cardEventTournaments = env->addStaticText(L"", Scale(0, 0, 360, 340), false, true, wEventsWindow);
 	cardEventTournaments->setBackgroundColor(irr::video::SColor(190, 20, 22, 35));
 
 	auto txtBadge2 = env->addStaticText(L"● PRÓXIMAMENTE", Scale(20, 18, 340, 40), false, false, cardEventTournaments);
@@ -4854,7 +4854,7 @@ void Game::InitShopInterface() {
 	stShopWallet->setOverrideColor(irr::video::SColor(255, 255, 220, 100));
 
 	// Card 1: Sobres
-	cardShopPacks = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopPacks = env->addStaticText(L"", Scale(0, 0, 260, 330), false, true, wShopWindow);
 	cardShopPacks->setBackgroundColor(irr::video::SColor(220, 16, 32, 54));
 	auto txtBadgeP = env->addStaticText(L"● EXPANSIONES", Scale(15, 16, 245, 38), false, false, cardShopPacks);
 	txtBadgeP->setOverrideColor(irr::video::SColor(255, 80, 200, 255));
@@ -4870,7 +4870,7 @@ void Game::InitShopInterface() {
 	btnShopPacks->setDrawBorder(false);
 
 	// Card 2: Avatares
-	cardShopAvatars = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopAvatars = env->addStaticText(L"", Scale(0, 0, 260, 330), false, true, wShopWindow);
 	cardShopAvatars->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
 	auto txtBadgeA = env->addStaticText(L"● PERSONALIZACIÓN", Scale(15, 16, 245, 38), false, false, cardShopAvatars);
 	txtBadgeA->setOverrideColor(irr::video::SColor(255, 220, 120, 255));
@@ -4886,7 +4886,7 @@ void Game::InitShopInterface() {
 	btnShopAvatars->setDrawBorder(false);
 
 	// Card 3: Potenciadores
-	cardShopBoosters = env->addStaticText(L"", Scale(0, 0, 260, 330), true, true, wShopWindow);
+	cardShopBoosters = env->addStaticText(L"", Scale(0, 0, 260, 330), false, true, wShopWindow);
 	cardShopBoosters->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
 	auto txtBadgeB = env->addStaticText(L"● MEJORAS & BUFFS", Scale(15, 16, 245, 38), false, false, cardShopBoosters);
 	txtBadgeB->setOverrideColor(irr::video::SColor(255, 100, 240, 150));
@@ -4921,7 +4921,7 @@ void Game::InitShopInterface() {
 	auto stPacksTitle = env->addStaticText(L"TIENDA - SOBRES DE EXPANSIÓN", Scale(40, 15, 600, 45), false, false, wShopPacksWindow);
 	stPacksTitle->setOverrideColor(irr::video::SColor(255, 100, 220, 255));
 
-	auto cardP1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopPacksWindow);
+	auto cardP1 = env->addStaticText(L"", Scale(40, 65, 340, 320), false, true, wShopPacksWindow);
 	cardP1->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
 	auto txtP1 = env->addStaticText(L"🌟 Sobre Génesis del Duelo\n\nContiene 9 cartas exclusivas.\nGarantiza 1 carta Ultra Rara o Secreta.\n\nPrecio: 100 Gemas", Scale(15, 15, 285, 180), false, true, cardP1);
 	txtP1->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
@@ -4929,7 +4929,7 @@ void Game::InitShopInterface() {
 	if (tBtnLobbyNormal) btnBuyP1->setImage(tBtnLobbyNormal);
 	btnBuyP1->setScaleImage(true);
 
-	auto cardP2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopPacksWindow);
+	auto cardP2 = env->addStaticText(L"", Scale(370, 65, 670, 320), false, true, wShopPacksWindow);
 	cardP2->setBackgroundColor(irr::video::SColor(220, 18, 28, 48));
 	auto txtP2 = env->addStaticText(L"🌑 Sobre Dimensión Oscura\n\nExpansión temática de monstruos OSCURIDAD.\nAlta probabilidad de invocaciones especiales.\n\nPrecio: 500 Oro", Scale(15, 15, 285, 180), false, true, cardP2);
 	txtP2->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
@@ -4952,7 +4952,7 @@ void Game::InitShopInterface() {
 	auto stAvatarsTitle = env->addStaticText(L"TIENDA - AVATARES EXCLUSIVOS", Scale(40, 15, 600, 45), false, false, wShopAvatarsWindow);
 	stAvatarsTitle->setOverrideColor(irr::video::SColor(255, 220, 120, 255));
 
-	auto cardA1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopAvatarsWindow);
+	auto cardA1 = env->addStaticText(L"", Scale(40, 65, 340, 320), false, true, wShopAvatarsWindow);
 	cardA1->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
 	auto txtA1 = env->addStaticText(L"👑 Avatar Faraón Supremo\n\nAvatar mítico con marco holográfico dorado y título de perfil 'Rey del Duelo'.\n\nPrecio: 250 Gemas", Scale(15, 15, 285, 180), false, true, cardA1);
 	txtA1->setOverrideColor(irr::video::SColor(255, 240, 220, 255));
@@ -4960,7 +4960,7 @@ void Game::InitShopInterface() {
 	if (tBtnLobbyNormal) btnBuyA1->setImage(tBtnLobbyNormal);
 	btnBuyA1->setScaleImage(true);
 
-	auto cardA2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopAvatarsWindow);
+	auto cardA2 = env->addStaticText(L"", Scale(370, 65, 670, 320), false, true, wShopAvatarsWindow);
 	cardA2->setBackgroundColor(irr::video::SColor(220, 36, 18, 54));
 	auto txtA2 = env->addStaticText(L"🐉 Avatar Señor del Dragón\n\nAvatar legendario de duelista dragón con bordes azules y efecto de aura reluciente.\n\nPrecio: 1,000 Oro", Scale(15, 15, 285, 180), false, true, cardA2);
 	txtA2->setOverrideColor(irr::video::SColor(255, 240, 220, 255));
@@ -4983,7 +4983,7 @@ void Game::InitShopInterface() {
 	auto stBoostersTitle = env->addStaticText(L"TIENDA - POTENCIADORES DE JUEGO", Scale(40, 15, 600, 45), false, false, wShopBoostersWindow);
 	stBoostersTitle->setOverrideColor(irr::video::SColor(255, 100, 240, 150));
 
-	auto cardB1 = env->addStaticText(L"", Scale(40, 65, 340, 320), true, true, wShopBoostersWindow);
+	auto cardB1 = env->addStaticText(L"", Scale(40, 65, 340, 320), false, true, wShopBoostersWindow);
 	cardB1->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
 	auto txtB1 = env->addStaticText(L"⚡ Potenciador EXP x2 (24h)\n\nDuplica los puntos de experiencia obtenidos en todos los duelos durante 24 horas.\n\nPrecio: 50 Gemas", Scale(15, 15, 285, 180), false, true, cardB1);
 	txtB1->setOverrideColor(irr::video::SColor(255, 220, 255, 235));
@@ -4991,7 +4991,7 @@ void Game::InitShopInterface() {
 	if (tBtnLobbyNormal) btnBuyB1->setImage(tBtnLobbyNormal);
 	btnBuyB1->setScaleImage(true);
 
-	auto cardB2 = env->addStaticText(L"", Scale(370, 65, 670, 320), true, true, wShopBoostersWindow);
+	auto cardB2 = env->addStaticText(L"", Scale(370, 65, 670, 320), false, true, wShopBoostersWindow);
 	cardB2->setBackgroundColor(irr::video::SColor(220, 18, 44, 38));
 	auto txtB2 = env->addStaticText(L"🪙 Potenciador Oro x2 (24h)\n\nDuplica las recompensas en oro ganadas al vencer duelistas e IA durante 24 horas.\n\nPrecio: 200 Oro", Scale(15, 15, 285, 180), false, true, cardB2);
 	txtB2->setOverrideColor(irr::video::SColor(255, 220, 255, 235));
@@ -5051,10 +5051,10 @@ void Game::InitProfileInterface() {
 	stProfileHeader->setOverrideColor(irr::video::SColor(255, 140, 220, 255));
 
 	// Left: Identidad
-	panelProfileUserCard = env->addStaticText(L"", Scale(40, 60, 360, 360), true, true, wProfileWindow);
+	panelProfileUserCard = env->addStaticText(L"", Scale(40, 60, 360, 360), false, true, wProfileWindow);
 	panelProfileUserCard->setBackgroundColor(irr::video::SColor(220, 20, 26, 44));
 
-	auto avatarFrame = env->addStaticText(L"👤\nDUELISTA", Scale(20, 20, 110, 110), true, true, panelProfileUserCard);
+	auto avatarFrame = env->addStaticText(L"👤\nDUELISTA", Scale(20, 20, 110, 110), false, true, panelProfileUserCard);
 	avatarFrame->setBackgroundColor(irr::video::SColor(255, 30, 40, 65));
 	avatarFrame->setOverrideColor(irr::video::SColor(255, 100, 220, 255));
 
@@ -5090,7 +5090,7 @@ void Game::InitProfileInterface() {
 	btnProfileBack->setOverrideColor(irr::video::SColor(255, 255, 220, 230));
 
 	// Right: Stats
-	panelProfileStats = env->addStaticText(L"", Scale(380, 60, 740, 360), true, true, wProfileWindow);
+	panelProfileStats = env->addStaticText(L"", Scale(380, 60, 740, 360), false, true, wProfileWindow);
 	panelProfileStats->setBackgroundColor(irr::video::SColor(220, 20, 26, 44));
 
 	stProfileUserStats = env->addStaticText(L"HISTORIAL Y ESTADÍSTICAS\n\n"
@@ -5160,7 +5160,7 @@ void Game::InitRankingInterface() {
 	stRankingHeader->setOverrideColor(irr::video::SColor(255, 255, 215, 80));
 
 	// Ranking Table (Left / Center)
-	panelRankingTable = env->addStaticText(L"", Scale(40, 60, 520, 360), true, true, wRankingWindow);
+	panelRankingTable = env->addStaticText(L"", Scale(40, 60, 520, 360), false, true, wRankingWindow);
 	panelRankingTable->setBackgroundColor(irr::video::SColor(220, 18, 22, 38));
 
 	auto txtRankList = env->addStaticText(
@@ -5179,7 +5179,7 @@ void Game::InitRankingInterface() {
 	txtRankList->setOverrideColor(irr::video::SColor(255, 230, 240, 255));
 
 	// User Rank Card (Right)
-	panelRankingUser = env->addStaticText(L"", Scale(540, 60, 800, 360), true, true, wRankingWindow);
+	panelRankingUser = env->addStaticText(L"", Scale(540, 60, 800, 360), false, true, wRankingWindow);
 	panelRankingUser->setBackgroundColor(irr::video::SColor(220, 22, 28, 48));
 
 	auto txtUserTitle = env->addStaticText(L"TU POSICIÓN EN LA TEMPORADA", Scale(20, 18, 240, 42), false, false, panelRankingUser);
@@ -5253,6 +5253,129 @@ void Game::UpdateMarquee(float dt) {
 
 	int barH = Scale(28);
 	stMarqueeText->setRelativePosition(irr::core::recti((int)marqueeX, Scale(4), (int)marqueeX + textW, barH));
+}
+
+void Game::ReloadAniDimensionStrings() {
+	if (stMarqueeText) {
+		auto s = gDataManager->GetSysString(12600);
+		if (!s.empty()) stMarqueeText->setText(s.data());
+	}
+	if (btnLobbyDuels) {
+		auto s = gDataManager->GetSysString(12601);
+		if (!s.empty()) btnLobbyDuels->setText(s.data());
+	}
+	if (btnLobbyDeck) {
+		auto s = gDataManager->GetSysString(12602);
+		if (!s.empty()) btnLobbyDeck->setText(s.data());
+	}
+	if (btnLobbyCatalog) {
+		auto s = gDataManager->GetSysString(12603);
+		if (!s.empty()) btnLobbyCatalog->setText(s.data());
+	}
+	if (btnLobbyShop) {
+		auto s = gDataManager->GetSysString(12604);
+		if (!s.empty()) btnLobbyShop->setText(s.data());
+	}
+	if (btnLobbyLogout) {
+		auto s = gDataManager->GetSysString(12605);
+		if (!s.empty()) btnLobbyLogout->setText(s.data());
+	}
+	if (btnLobbyReplay) {
+		auto s = gDataManager->GetSysString(12606);
+		if (!s.empty()) btnLobbyReplay->setText(s.data());
+	}
+	if (btnLobbyEvents) {
+		auto s = gDataManager->GetSysString(12607);
+		if (!s.empty()) btnLobbyEvents->setText(s.data());
+	}
+	if (btnLobbyRanking) {
+		auto s = gDataManager->GetSysString(12608);
+		if (!s.empty()) btnLobbyRanking->setText(s.data());
+	}
+	if (btnLobbyProfile) {
+		auto s = gDataManager->GetSysString(12609);
+		if (!s.empty()) btnLobbyProfile->setText(s.data());
+	}
+	if (btnLobbySettings) {
+		auto s = gDataManager->GetSysString(12610);
+		if (!s.empty()) btnLobbySettings->setText(s.data());
+	}
+	if (btnDuelsBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnDuelsBack->setText(s.data());
+	}
+	if (btnEventsBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnEventsBack->setText(s.data());
+	}
+	if (btnShopBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnShopBack->setText(s.data());
+	}
+	if (btnShopPacksBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnShopPacksBack->setText(s.data());
+	}
+	if (btnShopAvatarsBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnShopAvatarsBack->setText(s.data());
+	}
+	if (btnShopBoostersBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnShopBoostersBack->setText(s.data());
+	}
+	if (btnProfileBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnProfileBack->setText(s.data());
+	}
+	if (btnRankingBack) {
+		auto s = gDataManager->GetSysString(12611);
+		if (!s.empty()) btnRankingBack->setText(s.data());
+	}
+	if (stDuelsHeader) {
+		auto s = gDataManager->GetSysString(12612);
+		if (!s.empty()) stDuelsHeader->setText(s.data());
+	}
+	if (stDuelsSubheader) {
+		auto s = gDataManager->GetSysString(12613);
+		if (!s.empty()) stDuelsSubheader->setText(s.data());
+	}
+	if (btnDuelOnline) {
+		auto s = gDataManager->GetSysString(12616);
+		if (!s.empty()) btnDuelOnline->setText(s.data());
+	}
+	if (btnDuelBot) {
+		auto s = gDataManager->GetSysString(12619);
+		if (!s.empty()) btnDuelBot->setText(s.data());
+	}
+	if (stEventsHeader) {
+		auto s = gDataManager->GetSysString(12620);
+		if (!s.empty()) stEventsHeader->setText(s.data());
+	}
+	if (stEventsSubheader) {
+		auto s = gDataManager->GetSysString(12621);
+		if (!s.empty()) stEventsSubheader->setText(s.data());
+	}
+	if (btnEventPuzzle) {
+		auto s = gDataManager->GetSysString(12624);
+		if (!s.empty()) btnEventPuzzle->setText(s.data());
+	}
+	if (stShopHeader) {
+		auto s = gDataManager->GetSysString(12625);
+		if (!s.empty()) stShopHeader->setText(s.data());
+	}
+	if (stRankingHeader) {
+		auto s = gDataManager->GetSysString(12626);
+		if (!s.empty()) stRankingHeader->setText(s.data());
+	}
+	if (stProfileHeader) {
+		auto s = gDataManager->GetSysString(12627);
+		if (!s.empty()) stProfileHeader->setText(s.data());
+	}
+	if (stDashboardTitle) {
+		auto s = gDataManager->GetSysString(12631);
+		if (!s.empty()) stDashboardTitle->setText(s.data());
+	}
 }
 
 } // namespace ygo

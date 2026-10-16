@@ -267,6 +267,7 @@ struct main_menu_panel_elements {
 	irr::gui::IGUIButton* btnLobbyRanking{ nullptr };
 	irr::gui::IGUIButton* btnLobbyProfile{ nullptr };
 	irr::gui::IGUIButton* btnLobbyLogout{ nullptr };
+	irr::gui::IGUIButton* btnLobbySettings{ nullptr };
 
 	// Main View Switcher
 	int currentMainView{ 0 };
@@ -696,6 +697,7 @@ public:
 	void InitRankingInterface();
 	void RepositionRanking();
 	void UpdateMarquee(float dt);
+	void ReloadAniDimensionStrings();
 	void LoadCore();
 #ifdef YGOPRO_BUILD_DLL
 	void LoadCoreFromRepos();

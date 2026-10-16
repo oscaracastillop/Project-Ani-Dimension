@@ -176,8 +176,25 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_LOBBY_DECK:
 			case BUTTON_LOBBY_CATALOG: {
+				mainGame->RefreshDeck(mainGame->cbDBDecks);
+				if(open_file && mainGame->deckBuilder.SetCurrentDeckFromFile(open_file_name, true)) {
+					auto name = Utils::GetFileName(open_file_name);
+					mainGame->ebDeckname->setText(Utils::ToUnicodeIfNeeded(name).data());
+					mainGame->cbDBDecks->setSelected(-1);
+					open_file = false;
+				} else if(mainGame->cbDBDecks->getSelected() != -1) {
+					mainGame->deckBuilder.SetCurrentDeckFromFile(Utils::ToPathString(mainGame->cbDBDecks->getItem(mainGame->cbDBDecks->getSelected())), true);
+					mainGame->ebDeckname->setText(L"");
+				}
 				mainGame->HideElement(mainGame->wMainMenu);
-				mainGame->wDeckEdit->setVisible(true);
+				if (mainGame->wTopBarMarquee) mainGame->wTopBarMarquee->setVisible(false);
+				mainGame->deckBuilder.Initialize();
+				break;
+			}
+			case BUTTON_LOBBY_SETTINGS: {
+				if (!mainGame->gSettings.window->isVisible())
+					mainGame->PopupElement(mainGame->gSettings.window);
+				mainGame->env->setFocus(mainGame->gSettings.window);
 				break;
 			}
 			case BUTTON_LOBBY_SHOP: {
@@ -209,15 +226,26 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				break;
 			}
 			case BUTTON_CARD_DUEL_ONLINE: {
-				if (mainGame->ebJoinHost) mainGame->ebJoinHost->setText(L"172.28.38.45");
-				if (mainGame->ebJoinPort) mainGame->ebJoinPort->setText(L"7911");
-				if (mainGame->ebNickName && !mainGame->loggedUsername.empty()) mainGame->ebNickName->setText(mainGame->loggedUsername.c_str());
-				mainGame->PopupElement(mainGame->wLanWindow);
+				mainGame->isHostingOnline = true;
+				if (mainGame->ebNickNameOnline && !mainGame->loggedUsername.empty()) {
+					mainGame->ebNickNameOnline->setText(mainGame->loggedUsername.c_str());
+				}
+				mainGame->HideElement(mainGame->wDuelsWindow);
+				mainGame->ShowElement(mainGame->wRoomListPlaceholder);
 				break;
 			}
 			case BUTTON_CARD_DUEL_BOT: {
-				mainGame->lstSinglePlayList->setWorkingPath(L"./windbot", true);
-				mainGame->PopupElement(mainGame->wSinglePlay);
+				mainGame->isHostingOnline = false;
+				mainGame->btnCreateHost->setEnabled(true);
+				mainGame->btnJoinHost->setEnabled(true);
+				mainGame->btnJoinCancel->setEnabled(true);
+				if (mainGame->ebJoinHost) mainGame->ebJoinHost->setText(L"127.0.0.1");
+				if (mainGame->ebJoinPort) mainGame->ebJoinPort->setText(L"7911");
+				if (mainGame->ebNickName && !mainGame->loggedUsername.empty()) {
+					mainGame->ebNickName->setText(mainGame->loggedUsername.c_str());
+				}
+				mainGame->HideElement(mainGame->wDuelsWindow);
+				mainGame->ShowElement(mainGame->wLanWindow);
 				break;
 			}
 			case BUTTON_CARD_EVENT_PUZZLE: {
@@ -315,7 +343,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_JOIN_CANCEL2: {
 				mainGame->HideElement(mainGame->wRoomListPlaceholder);
-				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->SwitchMainView(mainGame->currentMainView == VIEW_DUELS ? VIEW_DUELS : VIEW_LOBBY);
 				mainGame->UpdateDashboardStats();
 				break;
 			}
@@ -357,7 +385,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_JOIN_CANCEL: {
 				mainGame->HideElement(mainGame->wLanWindow);
-				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->SwitchMainView(mainGame->currentMainView == VIEW_DUELS ? VIEW_DUELS : VIEW_LOBBY);
 				mainGame->UpdateDashboardStats();
 				break;
 			}
@@ -572,7 +600,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 			}
 			case BUTTON_CANCEL_REPLAY: {
 				mainGame->HideElement(mainGame->wReplay);
-				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->SwitchMainView(VIEW_LOBBY);
 				break;
 			}
 			case BUTTON_HP_AI_TOGGLE: {
@@ -683,7 +711,7 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				if(mainGame->dInfo.isSingleMode)
 					break;
 				mainGame->HideElement(mainGame->wSinglePlay);
-				mainGame->ShowElement(mainGame->wMainMenu);
+				mainGame->SwitchMainView(mainGame->currentMainView == VIEW_EVENTS ? VIEW_EVENTS : (mainGame->currentMainView == VIEW_DUELS ? VIEW_DUELS : VIEW_LOBBY));
 				break;
 			}
 			case BUTTON_DECK_EDIT: {
