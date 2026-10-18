@@ -215,41 +215,75 @@ void ServerLobby::GetRoomsThread() {
 	roomsVector.clear();
 	try {
 		auto j = nlohmann::json::parse(retrieved_data);
-		if(j.size()) {
-#define GET(field, type) obj[field].get<type>()
+		if(j.size() && j.contains("rooms") && j["rooms"].is_array()) {
+			auto safeGetNum = [](const nlohmann::json& o, const std::string& k, auto def) -> decltype(def) {
+				using T = decltype(def);
+				if (!o.contains(k)) return def;
+				const auto& v = o[k];
+				if (v.is_number()) return v.get<T>();
+				if (v.is_string()) {
+					try {
+						if constexpr (std::is_unsigned_v<T>) return static_cast<T>(std::stoull(v.get<std::string>()));
+						else return static_cast<T>(std::stoll(v.get<std::string>()));
+					} catch (...) { return def; }
+				}
+				if (v.is_boolean()) return v.get<bool>() ? 1 : 0;
+				return def;
+			};
+			auto safeGetBool = [](const nlohmann::json& o, const std::string& k, bool def) -> bool {
+				if (!o.contains(k)) return def;
+				const auto& v = o[k];
+				if (v.is_boolean()) return v.get<bool>();
+				if (v.is_number()) return v.get<int>() != 0;
+				if (v.is_string()) {
+					std::string s = v.get<std::string>();
+					return s == "true" || s == "1" || s == "yes";
+				}
+				return def;
+			};
+			auto safeGetStr = [](const nlohmann::json& o, const std::string& k, const std::string& def = "") -> std::string {
+				if (!o.contains(k)) return def;
+				const auto& v = o[k];
+				if (v.is_string()) return v.get<std::string>();
+				if (v.is_number() || v.is_boolean()) return v.dump();
+				return def;
+			};
+
 			for(auto& obj : j["rooms"]) {
 				RoomInfo room;
-				room.id = GET("roomid", int);
-				room.name = BufferIO::DecodeUTF8(obj["roomname"].get_ref<std::string&>());
-				room.description = BufferIO::DecodeUTF8(obj["roomnotes"].get_ref<std::string&>());
-				room.locked = GET("needpass", bool);
-				room.started = obj["istart"].get_ref<std::string&>() == "start";
-				room.info.mode = GET("roommode", int);
-				room.info.team1 = GET("team1", int);
-				room.info.team2 = GET("team2", int);
-				room.info.best_of = GET("best_of", int);
-				const auto flag = GET("duel_flag", uint64_t);
-				room.info.duel_flag_low = flag & 0xffffffff;
-				room.info.duel_flag_high = (flag >> 32) & 0xffffffff;
-				room.info.forbiddentypes = GET("forbidden_types", int);
-				room.info.extra_rules = GET("extra_rules", int);
-				room.info.start_lp = GET("start_lp", int);
-				room.info.start_hand = GET("start_hand", int);
-				room.info.draw_count = GET("draw_count", int);
-				room.info.time_limit = GET("time_limit", int);
-				room.info.rule = GET("rule", int);
-				room.info.no_check_deck_content = GET("no_check", bool);
-				room.info.no_shuffle_deck = GET("no_shuffle", bool) || (flag & DUEL_PSEUDO_SHUFFLE);
-				room.info.lflist = GET("banlist_hash", int);
-				room.info.sizes.main.min = GET("main_min", uint16_t);
-				room.info.sizes.main.max = GET("main_max", uint16_t);
-				room.info.sizes.extra.min = GET("extra_min", uint16_t);
-				room.info.sizes.extra.max = GET("extra_max", uint16_t);
-				room.info.sizes.side.min = GET("side_min", uint16_t);
-				room.info.sizes.side.max = GET("side_max", uint16_t);
-#undef GET
-				for(auto& obj2 : obj["users"])
-					room.players.push_back(BufferIO::DecodeUTF8(obj2["name"].get_ref<const std::string&>()));
+				room.id = safeGetNum(obj, "roomid", 0);
+				room.name = BufferIO::DecodeUTF8(safeGetStr(obj, "roomname"));
+				room.description = BufferIO::DecodeUTF8(safeGetStr(obj, "roomnotes"));
+				room.locked = safeGetBool(obj, "needpass", false);
+				room.started = safeGetStr(obj, "istart") == "start";
+				room.info.mode = safeGetNum(obj, "roommode", 0);
+				room.info.team1 = safeGetNum(obj, "team1", 1);
+				room.info.team2 = safeGetNum(obj, "team2", 1);
+				room.info.best_of = safeGetNum(obj, "best_of", 1);
+				const auto flag = safeGetNum(obj, "duel_flag", (uint64_t)0);
+				room.info.duel_flag_low = (uint32_t)(flag & 0xffffffff);
+				room.info.duel_flag_high = (uint32_t)((flag >> 32) & 0xffffffff);
+				room.info.forbiddentypes = safeGetNum(obj, "forbidden_types", 0);
+				room.info.extra_rules = safeGetNum(obj, "extra_rules", 0);
+				room.info.start_lp = safeGetNum(obj, "start_lp", 8000);
+				room.info.start_hand = safeGetNum(obj, "start_hand", 5);
+				room.info.draw_count = safeGetNum(obj, "draw_count", 1);
+				room.info.time_limit = safeGetNum(obj, "time_limit", 180);
+				room.info.rule = safeGetNum(obj, "rule", 0);
+				room.info.no_check_deck_content = safeGetBool(obj, "no_check", false);
+				room.info.no_shuffle_deck = safeGetBool(obj, "no_shuffle", false) || (flag & DUEL_PSEUDO_SHUFFLE);
+				room.info.lflist = safeGetNum(obj, "banlist_hash", 0);
+				room.info.sizes.main.min = safeGetNum(obj, "main_min", (uint16_t)40);
+				room.info.sizes.main.max = safeGetNum(obj, "main_max", (uint16_t)60);
+				room.info.sizes.extra.min = safeGetNum(obj, "extra_min", (uint16_t)0);
+				room.info.sizes.extra.max = safeGetNum(obj, "extra_max", (uint16_t)15);
+				room.info.sizes.side.min = safeGetNum(obj, "side_min", (uint16_t)0);
+				room.info.sizes.side.max = safeGetNum(obj, "side_max", (uint16_t)15);
+				if(obj.contains("users") && obj["users"].is_array()) {
+					for(auto& obj2 : obj["users"]) {
+						room.players.push_back(BufferIO::DecodeUTF8(safeGetStr(obj2, "name")));
+					}
+				}
 
 				roomsVector.push_back(std::move(room));
 			}
