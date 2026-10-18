@@ -960,6 +960,8 @@ public:
 
 	irr::gui::IGUIStaticText* fpsCounter;
 	std::vector<std::pair<irr::gui::IGUIElement*, uint32_t>> defaultStrings;
+	static std::wstring GetAniString(uint32_t code);
+	static bool IsCurrentLanguageSpanish();
 };
 
 extern Game* mainGame;

@@ -2,16 +2,8 @@
 config
 config/configs.json
 config/languages
-config/languages/Deutsch
-config/languages/Deutsch/strings.conf
 config/languages/Español
 config/languages/Español/strings.conf
-config/languages/Français
-config/languages/Français/strings.conf
-config/languages/Italiano
-config/languages/Italiano/strings.conf
-config/languages/Português
-config/languages/Português/strings.conf
 config/strings.conf
 config/system.conf
 config/user_configs.json

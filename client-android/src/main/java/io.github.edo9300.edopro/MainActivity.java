@@ -533,68 +533,62 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	private void copyAssetTree(String assetPath, File destDir, boolean forceOverwrite) {
+		try {
+			String[] list = getAssets().list(assetPath);
+			if (list == null || list.length == 0) return;
+			if (!destDir.exists()) destDir.mkdirs();
+			for (String item : list) {
+				String childAsset = assetPath.isEmpty() ? item : assetPath + "/" + item;
+				String[] subList = getAssets().list(childAsset);
+				if (subList != null && subList.length > 0) {
+					File subDir = new File(destDir, item);
+					copyAssetTree(childAsset, subDir, forceOverwrite);
+				} else {
+					File targetFile = new File(destDir, item);
+					copyAssetFile(childAsset, targetFile, forceOverwrite);
+				}
+			}
+		} catch (Exception ignored) {
+		}
+	}
+
+	private void copyAssetFile(String assetPath, File destFile, boolean forceOverwrite) {
+		if (destFile.exists() && !forceOverwrite && destFile.length() > 0) return;
+		try {
+			File parent = destFile.getParentFile();
+			if (parent != null && !parent.exists()) parent.mkdirs();
+			try (InputStream in = getAssets().open(assetPath);
+				 FileOutputStream out = new FileOutputStream(destFile)) {
+				byte[] buffer = new byte[8192];
+				int read;
+				while ((read = in.read(buffer)) != -1) {
+					out.write(buffer, 0, read);
+				}
+				out.flush();
+			}
+		} catch (Exception ignored) {
+		}
+	}
+
 	public void ensureEssentialAssets(String working_dir) {
 		if (working_dir == null || working_dir.isEmpty()) return;
 		try {
 			File texturesDir = new File(working_dir, "textures");
 			if (!texturesDir.exists()) texturesDir.mkdirs();
-
-			String[] assetFolders = new String[]{"defaults/textures", "textures"};
-			for (String folder : assetFolders) {
-				try {
-					String[] list = getAssets().list(folder);
-					if (list != null) {
-						for (String file : list) {
-							File destFile = new File(texturesDir, file);
-							if (!destFile.exists() || destFile.length() == 0) {
-								try (InputStream in = getAssets().open(folder + "/" + file);
-									 FileOutputStream out = new FileOutputStream(destFile)) {
-									byte[] buffer = new byte[8192];
-									int read;
-									while ((read = in.read(buffer)) != -1) {
-										out.write(buffer, 0, read);
-									}
-									out.flush();
-								} catch (Exception ignored) {
-								}
-							}
-						}
-					}
-				} catch (Exception ignored) {
-				}
-			}
+			copyAssetTree("defaults/textures", texturesDir, false);
+			copyAssetTree("textures", texturesDir, false);
 
 			File configDir = new File(working_dir, "config");
 			if (!configDir.exists()) configDir.mkdirs();
-			String[] configFolders = new String[]{"defaults/config", "config"};
-			for (String folder : configFolders) {
-				try {
-					String[] list = getAssets().list(folder);
-					if (list != null) {
-						for (String file : list) {
-							File destFile = new File(configDir, file);
-							if (!destFile.exists() || destFile.length() == 0) {
-								try (InputStream in = getAssets().open(folder + "/" + file);
-									 FileOutputStream out = new FileOutputStream(destFile)) {
-									byte[] buffer = new byte[8192];
-									int read;
-									while ((read = in.read(buffer)) != -1) {
-										out.write(buffer, 0, read);
-									}
-									out.flush();
-								} catch (Exception ignored) {
-								}
-							}
-						}
-					}
-				} catch (Exception ignored) {
-				}
-			}
+			copyAssetTree("defaults/config", configDir, true);
+			copyAssetTree("config", configDir, true);
 
 			File sysConf = new File(configDir, "system.conf");
 			if (sysConf.exists()) {
 				try {
 					StringBuilder sb = new StringBuilder();
+					boolean hasLanguage = false;
 					try (BufferedReader br = new BufferedReader(new FileReader(sysConf))) {
 						String l;
 						while ((l = br.readLine()) != null) {
@@ -602,6 +596,14 @@ public class MainActivity extends Activity {
 								sb.append("dpi_scale = 1.000000\n");
 							} else if (l.trim().startsWith("textfont")) {
 								sb.append("textfont = fonts/NotoSansJP-Regular.otf 11\n");
+							} else if (l.trim().startsWith("language")) {
+								hasLanguage = true;
+								String val = l.split("=")[1].trim();
+								if (!val.equalsIgnoreCase("Español") && !val.equalsIgnoreCase("English") && !val.equalsIgnoreCase("en") && !val.equalsIgnoreCase("es")) {
+									sb.append("language = Español\n");
+								} else {
+									sb.append(l).append("\n");
+								}
 							} else {
 								sb.append(l).append("\n");
 							}
@@ -610,6 +612,9 @@ public class MainActivity extends Activity {
 					String content = sb.toString();
 					if (!content.contains("textfont =")) {
 						content += "textfont = fonts/NotoSansJP-Regular.otf 11\n";
+					}
+					if (!hasLanguage) {
+						content += "language = Español\n";
 					}
 					try (FileWriter fw = new FileWriter(sysConf)) {
 						fw.write(content);

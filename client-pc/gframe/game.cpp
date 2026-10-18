@@ -274,17 +274,17 @@ void Game::Initialize() {
 	wMainMenu->setDrawTitlebar(false);
 
 	// 10 Modular Lobby Buttons (2 balanced columns of 5)
-	btnLobbyDuels = env->addButton(Scale(60, 140, 260, 184), wMainMenu, BUTTON_LOBBY_DUELS, L"⚔  DUELOS");
-	btnLobbyDeck = env->addButton(Scale(60, 196, 260, 240), wMainMenu, BUTTON_LOBBY_DECK, L"🃏  EDITOR DE DECKS");
-	btnLobbyCatalog = env->addButton(Scale(60, 252, 260, 296), wMainMenu, BUTTON_LOBBY_CATALOG, L"📖  CATÁLOGO CARTAS");
-	btnLobbyShop = env->addButton(Scale(60, 308, 260, 352), wMainMenu, BUTTON_LOBBY_SHOP, L"🛒  TIENDA");
-	btnLobbyLogout = env->addButton(Scale(60, 364, 260, 408), wMainMenu, BUTTON_LOBBY_LOGOUT, L"🚪  CERRAR SESIÓN");
+	btnLobbyDuels = env->addButton(Scale(60, 140, 260, 184), wMainMenu, BUTTON_LOBBY_DUELS, GetAniString(12601).c_str());
+	btnLobbyDeck = env->addButton(Scale(60, 196, 260, 240), wMainMenu, BUTTON_LOBBY_DECK, GetAniString(12602).c_str());
+	btnLobbyCatalog = env->addButton(Scale(60, 252, 260, 296), wMainMenu, BUTTON_LOBBY_CATALOG, GetAniString(12603).c_str());
+	btnLobbyShop = env->addButton(Scale(60, 308, 260, 352), wMainMenu, BUTTON_LOBBY_SHOP, GetAniString(12604).c_str());
+	btnLobbyLogout = env->addButton(Scale(60, 364, 260, 408), wMainMenu, BUTTON_LOBBY_LOGOUT, GetAniString(12605).c_str());
 
-	btnLobbyReplay = env->addButton(Scale(275, 140, 475, 184), wMainMenu, BUTTON_LOBBY_REPLAY, L"🎬  REPETICIONES");
-	btnLobbyEvents = env->addButton(Scale(275, 196, 475, 240), wMainMenu, BUTTON_LOBBY_EVENTS, L"🧩  EVENTOS");
-	btnLobbyRanking = env->addButton(Scale(275, 252, 475, 296), wMainMenu, BUTTON_LOBBY_RANKING, L"🏆  RANKING");
-	btnLobbyProfile = env->addButton(Scale(275, 308, 475, 352), wMainMenu, BUTTON_LOBBY_PROFILE, L"👤  PERFIL");
-	btnLobbySettings = env->addButton(Scale(275, 364, 475, 408), wMainMenu, BUTTON_LOBBY_SETTINGS, L"⚙  CONFIGURACIÓN");
+	btnLobbyReplay = env->addButton(Scale(275, 140, 475, 184), wMainMenu, BUTTON_LOBBY_REPLAY, GetAniString(12606).c_str());
+	btnLobbyEvents = env->addButton(Scale(275, 196, 475, 240), wMainMenu, BUTTON_LOBBY_EVENTS, GetAniString(12607).c_str());
+	btnLobbyRanking = env->addButton(Scale(275, 252, 475, 296), wMainMenu, BUTTON_LOBBY_RANKING, GetAniString(12608).c_str());
+	btnLobbyProfile = env->addButton(Scale(275, 308, 475, 352), wMainMenu, BUTTON_LOBBY_PROFILE, GetAniString(12609).c_str());
+	btnLobbySettings = env->addButton(Scale(275, 364, 475, 408), wMainMenu, BUTTON_LOBBY_SETTINGS, GetAniString(12610).c_str());
 
 	// Legacy pointers for engine compatibility
 	btnOnlineMode = btnLobbyDuels;
@@ -334,7 +334,7 @@ void Game::Initialize() {
 		imgDashboardBg->setUseAlphaChannel(true);
 	}
 
-	stDashboardTitle = env->addStaticText(L"\u2726 ESTADO DE RED \u2726", Scale(15, 12, 255, 36), false, false, wDashboard);
+	stDashboardTitle = env->addStaticText(GetAniString(12631).c_str(), Scale(15, 12, 255, 36), false, false, wDashboard);
 	stDashboardTitle->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stDashboardTitle->setOverrideColor(irr::video::SColor(255, 0, 230, 255));
 
@@ -4127,7 +4127,14 @@ void Game::PopulateResourcesDirectories() {
 void Game::PopulateLocales() {
 	locales.clear();
 	for(auto& locale : Utils::FindSubfolders(EPRO_TEXT("./config/languages/"), 1, false)) {
-		locales.emplace_back(locale, std::vector<epro::path_string>());
+		auto upper = Utils::ToUpperNoAccents(locale);
+		if (upper == EPRO_TEXT("ESPANOL") || upper == EPRO_TEXT("SPANISH")) {
+			locales.emplace_back(locale, std::vector<epro::path_string>());
+		}
+	}
+	// Always guarantee Español is present as the second language (alongside English default)
+	if(locales.empty()) {
+		locales.emplace_back(EPRO_TEXT("Español"), std::vector<epro::path_string>());
 	}
 }
 
@@ -5276,126 +5283,190 @@ void Game::UpdateMarquee(float dt) {
 	stMarqueeText->setRelativePosition(irr::core::recti((int)marqueeX, Scale(4), (int)marqueeX + textW, barH));
 }
 
+bool Game::IsCurrentLanguageSpanish() {
+	if (gGameConfig->locale == EPRO_TEXT("Español") || gGameConfig->locale == EPRO_TEXT("es") ||
+	    gGameConfig->locale == EPRO_TEXT("Spanish") || gGameConfig->locale == EPRO_TEXT("spanish")) {
+		return true;
+	}
+	if (mainGame && mainGame->gSettings.cbCurrentLocale) {
+		auto sel = mainGame->gSettings.cbCurrentLocale->getSelected();
+		if (sel > 0) return true;
+	}
+	return false;
+}
+
+std::wstring Game::GetAniString(uint32_t code) {
+	if (gDataManager) {
+		auto s = gDataManager->GetSysString(code);
+		if (!s.empty() && s != L"???" && s.find(L"?") == std::wstring::npos) {
+			return std::wstring(s);
+		}
+	}
+	bool isSpanish = IsCurrentLanguageSpanish();
+	switch (code) {
+		case 12600: return isSpanish ? L"✦ BIENVENIDOS A ANI-DIMENSION ✦ SERVIDOR OFICIAL EN LINEA (172.28.38.45:7911) ✦ CONECTATE, ARMA TU BARAYA Y DEMUESTRA TU PODER ✦"
+		                             : L"✦ WELCOME TO ANI-DIMENSION ✦ OFFICIAL SERVER ONLINE (172.28.38.45:7911) ✦ CONNECT, BUILD YOUR DECK AND SHOW YOUR POWER ✦";
+		case 12601: return isSpanish ? L"DUELOS" : L"DUELS";
+		case 12602: return isSpanish ? L"EDITOR DE DECKS" : L"DECK EDITOR";
+		case 12603: return isSpanish ? L"CATALOGO CARTAS" : L"CARD CATALOG";
+		case 12604: return isSpanish ? L"TIENDA" : L"SHOP";
+		case 12605: return isSpanish ? L"CERRAR SESION" : L"LOGOUT";
+		case 12606: return isSpanish ? L"REPETICIONES" : L"REPLAYS";
+		case 12607: return isSpanish ? L"EVENTOS" : L"EVENTS";
+		case 12608: return isSpanish ? L"RANKING" : L"RANKING";
+		case 12609: return isSpanish ? L"PERFIL" : L"PROFILE";
+		case 12610: return isSpanish ? L"CONFIGURACION" : L"SETTINGS";
+		case 12611: return isSpanish ? L"VOLVER AL LOBBY" : L"RETURN TO LOBBY";
+		case 12612: return isSpanish ? L"MODOS DE DUELO" : L"DUEL MODES";
+		case 12613: return isSpanish ? L"Selecciona la modalidad para ingresar a la arena de combate" : L"Choose your mode to enter the combat arena";
+		case 12614: return isSpanish ? L"Servidores en Linea Multijugador" : L"Online Multiplayer Servers";
+		case 12615: return isSpanish ? L"Conectate al servidor de duelos de Ani-Dimension.\n\n• Salas competitivas, casuales y de torneo\n• Duelos individuales (Single), Match y Tag\n• Soporte oficial para banlists TCG / OCG\n• Servidor activo en puerto 7911"
+		                             : L"Connect to Ani-Dimension official duel servers.\n\n• Competitive, casual and tournament rooms\n• Single, Match and Tag duels\n• Official TCG/OCG banlist support\n• Active server on port 7911";
+		case 12616: return isSpanish ? L"ENTRAR A SERVIDORES" : L"ENTER SERVERS";
+		case 12617: return isSpanish ? L"LAN & Bot Inteligencia Artificial" : L"LAN & Artificial Intelligence Bot";
+		case 12618: return isSpanish ? L"Perfecciona tus barajas y estrategias tacticas contra la maquina o amigos en red.\n\n• Motor inteligente WindBot integrado\n• Gran variedad de barajas y dificultades\n• Conexion por red local (LAN) directa\n• Pruebas de mano y jugadas en solitario"
+		                             : L"Practice your decks and tactics against AI or friends over LAN.\n\n• Integrated WindBot AI engine\n• Wide variety of decks and difficulties\n• Direct Local Area Network (LAN) play\n• Hand testing and solo play";
+		case 12619: return isSpanish ? L"JUGAR VS BOT / LAN" : L"PLAY VS BOT / LAN";
+		case 12620: return isSpanish ? L"CENTRO DE EVENTOS & DESAFIOS" : L"EVENTS & CHALLENGES CENTER";
+		case 12621: return isSpanish ? L"Desafios por tiempo limitado, retos tacticos y torneos de temporada" : L"Time-limited challenges, tactical puzzles and season tournaments";
+		case 12622: return isSpanish ? L"Rompecabezas de Duelo (Puzzles)" : L"Duel Puzzles";
+		case 12623: return isSpanish ? L"Demuestra tu intelecto y vision estrategica en los acertijos de duelo.\n\n• Resuelve escenarios limite en un solo turno\n• Mas de 100 rompecabezas oficiales\n• Descubre combos y cadenas complejas\n• Desbloquea recompensas especiales"
+		                             : L"Prove your tactical vision in duel puzzles.\n\n• Clear lethal scenarios in a single turn\n• Over 100 official puzzles\n• Complex chains and combos\n• Special rewards";
+		case 12624: return isSpanish ? L"ABRIR ROMPECABEZAS" : L"OPEN PUZZLES";
+		case 12625: return isSpanish ? L"TIENDA ANI-DIMENSION" : L"ANI-DIMENSION SHOP";
+		case 12626: return isSpanish ? L"TABLA DE CLASIFICACION GLOBAL - TEMPORADA 1" : L"GLOBAL LEADERBOARD - SEASON 1";
+		case 12627: return isSpanish ? L"PERFIL DEL DUELISTA" : L"DUELIST PROFILE";
+		case 12628: return isSpanish ? L"Duelista: " : L"Duelist: ";
+		case 12629: return isSpanish ? L"Rol: [ Duelista ]" : L"Rol: [ Duelist ]";
+		case 12630: return isSpanish ? L"Rol: [ Administrador ]" : L"Rol: [ Administrator ]";
+		case 12631: return isSpanish ? L"ESTADO DE RED" : L"NETWORK STATUS";
+		case 12632: return isSpanish ? L"Servidor: [ En Linea ]" : L"Server: [ Online ]";
+		case 12633: return isSpanish ? L"Online: {0} duelistas" : L"Online: {0} duelists";
+		case 12634: return isSpanish ? L"Cuentas: {0} registradas" : L"Accounts: {0} registered";
+		default: return L"";
+	}
+}
+
 void Game::ReloadAniDimensionStrings() {
 	if (stMarqueeText) {
-		auto s = gDataManager->GetSysString(12600);
-		if (!s.empty()) stMarqueeText->setText(s.data());
+		auto s = GetAniString(12600);
+		if (!s.empty()) stMarqueeText->setText(s.c_str());
 	}
 	if (btnLobbyDuels) {
-		auto s = gDataManager->GetSysString(12601);
-		if (!s.empty()) btnLobbyDuels->setText(s.data());
+		auto s = GetAniString(12601);
+		if (!s.empty()) btnLobbyDuels->setText(s.c_str());
 	}
 	if (btnLobbyDeck) {
-		auto s = gDataManager->GetSysString(12602);
-		if (!s.empty()) btnLobbyDeck->setText(s.data());
+		auto s = GetAniString(12602);
+		if (!s.empty()) btnLobbyDeck->setText(s.c_str());
 	}
 	if (btnLobbyCatalog) {
-		auto s = gDataManager->GetSysString(12603);
-		if (!s.empty()) btnLobbyCatalog->setText(s.data());
+		auto s = GetAniString(12603);
+		if (!s.empty()) btnLobbyCatalog->setText(s.c_str());
 	}
 	if (btnLobbyShop) {
-		auto s = gDataManager->GetSysString(12604);
-		if (!s.empty()) btnLobbyShop->setText(s.data());
+		auto s = GetAniString(12604);
+		if (!s.empty()) btnLobbyShop->setText(s.c_str());
 	}
 	if (btnLobbyLogout) {
-		auto s = gDataManager->GetSysString(12605);
-		if (!s.empty()) btnLobbyLogout->setText(s.data());
+		auto s = GetAniString(12605);
+		if (!s.empty()) btnLobbyLogout->setText(s.c_str());
 	}
 	if (btnLobbyReplay) {
-		auto s = gDataManager->GetSysString(12606);
-		if (!s.empty()) btnLobbyReplay->setText(s.data());
+		auto s = GetAniString(12606);
+		if (!s.empty()) btnLobbyReplay->setText(s.c_str());
 	}
 	if (btnLobbyEvents) {
-		auto s = gDataManager->GetSysString(12607);
-		if (!s.empty()) btnLobbyEvents->setText(s.data());
+		auto s = GetAniString(12607);
+		if (!s.empty()) btnLobbyEvents->setText(s.c_str());
 	}
 	if (btnLobbyRanking) {
-		auto s = gDataManager->GetSysString(12608);
-		if (!s.empty()) btnLobbyRanking->setText(s.data());
+		auto s = GetAniString(12608);
+		if (!s.empty()) btnLobbyRanking->setText(s.c_str());
 	}
 	if (btnLobbyProfile) {
-		auto s = gDataManager->GetSysString(12609);
-		if (!s.empty()) btnLobbyProfile->setText(s.data());
+		auto s = GetAniString(12609);
+		if (!s.empty()) btnLobbyProfile->setText(s.c_str());
 	}
 	if (btnLobbySettings) {
-		auto s = gDataManager->GetSysString(12610);
-		if (!s.empty()) btnLobbySettings->setText(s.data());
+		auto s = GetAniString(12610);
+		if (!s.empty()) btnLobbySettings->setText(s.c_str());
 	}
 	if (btnDuelsBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnDuelsBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnDuelsBack->setText(s.c_str());
 	}
 	if (btnEventsBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnEventsBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnEventsBack->setText(s.c_str());
 	}
 	if (btnShopBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnShopBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnShopBack->setText(s.c_str());
 	}
 	if (btnShopPacksBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnShopPacksBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnShopPacksBack->setText(s.c_str());
 	}
 	if (btnShopAvatarsBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnShopAvatarsBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnShopAvatarsBack->setText(s.c_str());
 	}
 	if (btnShopBoostersBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnShopBoostersBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnShopBoostersBack->setText(s.c_str());
 	}
 	if (btnProfileBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnProfileBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnProfileBack->setText(s.c_str());
 	}
 	if (btnRankingBack) {
-		auto s = gDataManager->GetSysString(12611);
-		if (!s.empty()) btnRankingBack->setText(s.data());
+		auto s = GetAniString(12611);
+		if (!s.empty()) btnRankingBack->setText(s.c_str());
 	}
 	if (stDuelsHeader) {
-		auto s = gDataManager->GetSysString(12612);
-		if (!s.empty()) stDuelsHeader->setText(s.data());
+		auto s = GetAniString(12612);
+		if (!s.empty()) stDuelsHeader->setText(s.c_str());
 	}
 	if (stDuelsSubheader) {
-		auto s = gDataManager->GetSysString(12613);
-		if (!s.empty()) stDuelsSubheader->setText(s.data());
+		auto s = GetAniString(12613);
+		if (!s.empty()) stDuelsSubheader->setText(s.c_str());
 	}
 	if (btnDuelOnline) {
-		auto s = gDataManager->GetSysString(12616);
-		if (!s.empty()) btnDuelOnline->setText(s.data());
+		auto s = GetAniString(12616);
+		if (!s.empty()) btnDuelOnline->setText(s.c_str());
 	}
 	if (btnDuelBot) {
-		auto s = gDataManager->GetSysString(12619);
-		if (!s.empty()) btnDuelBot->setText(s.data());
+		auto s = GetAniString(12619);
+		if (!s.empty()) btnDuelBot->setText(s.c_str());
 	}
 	if (stEventsHeader) {
-		auto s = gDataManager->GetSysString(12620);
-		if (!s.empty()) stEventsHeader->setText(s.data());
+		auto s = GetAniString(12620);
+		if (!s.empty()) stEventsHeader->setText(s.c_str());
 	}
 	if (stEventsSubheader) {
-		auto s = gDataManager->GetSysString(12621);
-		if (!s.empty()) stEventsSubheader->setText(s.data());
+		auto s = GetAniString(12621);
+		if (!s.empty()) stEventsSubheader->setText(s.c_str());
 	}
 	if (btnEventPuzzle) {
-		auto s = gDataManager->GetSysString(12624);
-		if (!s.empty()) btnEventPuzzle->setText(s.data());
+		auto s = GetAniString(12624);
+		if (!s.empty()) btnEventPuzzle->setText(s.c_str());
 	}
 	if (stShopHeader) {
-		auto s = gDataManager->GetSysString(12625);
-		if (!s.empty()) stShopHeader->setText(s.data());
+		auto s = GetAniString(12625);
+		if (!s.empty()) stShopHeader->setText(s.c_str());
 	}
 	if (stRankingHeader) {
-		auto s = gDataManager->GetSysString(12626);
-		if (!s.empty()) stRankingHeader->setText(s.data());
+		auto s = GetAniString(12626);
+		if (!s.empty()) stRankingHeader->setText(s.c_str());
 	}
 	if (stProfileHeader) {
-		auto s = gDataManager->GetSysString(12627);
-		if (!s.empty()) stProfileHeader->setText(s.data());
+		auto s = GetAniString(12627);
+		if (!s.empty()) stProfileHeader->setText(s.c_str());
 	}
 	if (stDashboardTitle) {
-		auto s = gDataManager->GetSysString(12631);
-		if (!s.empty()) stDashboardTitle->setText(s.data());
+		auto s = GetAniString(12631);
+		if (!s.empty()) stDashboardTitle->setText(s.c_str());
 	}
 }
 
