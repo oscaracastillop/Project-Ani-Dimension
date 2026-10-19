@@ -1,0 +1,55 @@
+{
+    "repos":  [
+                  {
+                      "url":  "https://github.com/ProjectIgnis/DeltaBagooska",
+                      "repo_name":  "Project Ignis updates",
+                      "repo_path":  "./repositories/delta-bagooska",
+                      "has_core":  true,
+                      "core_path":  "bin",
+                      "data_path":  "",
+                      "script_path":  "script",
+                      "should_update":  true,
+                      "should_read":  true
+                  },
+                  {
+                      "url":  "https://github.com/ProjectIgnis/LFLists",
+                      "repo_name":  "Forbidden \u0026 Limited Card Lists",
+                      "repo_path":  "./repositories/lflists",
+                      "lflist_path":  ".",
+                      "should_update":  true,
+                      "should_read":  true
+                  },
+                  {
+                      "url":  "https://github.com/ProjectIgnis/Puzzles",
+                      "repo_name":  "Project Ignis puzzles",
+                      "repo_path":  "./puzzles/Canon collection",
+                      "should_update":  true,
+                      "should_read":  true
+                  }
+              ],
+    "urls":  [
+                 {
+                     "url":  "https://images.ygoprodeck.com/images/cards/{}.jpg",
+                     "type":  "pic"
+                 },
+                 {
+                     "url":  "https://images.ygoprodeck.com/images/cards_small/{}.jpg",
+                     "type":  "field"
+                 },
+                 {
+                     "url":  "default",
+                     "type":  "cover"
+                 }
+             ],
+    "servers":  [
+                    {
+                        "name":  "Ani Dimension (Servidor Oficial)",
+                        "address":  "172.28.38.45",
+                        "duelport":  7911,
+                        "roomaddress":  "172.28.38.45",
+                        "roomlistprotocol":  "http",
+                        "roomlistport":  7922
+                    }
+                ],
+    "posixPathExtension":  "/usr/local/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands"
+}

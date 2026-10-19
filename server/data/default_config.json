@@ -1,8 +1,8 @@
 {
   "file": "./config/config.json",
   "port": 7911,
-  "version": 4945,
-  "alternative_versions": [],
+  "version": 4948,
+  "alternative_versions": [4945, 4948, 4962, 4944],
   "hostinfo": {
     "lflist": 0,
     "rule": 0,
@@ -19,13 +19,13 @@
     "auto_death": false
   },
   "modules": {
-    "welcome": "MyCard YGOPro Server",
-    "update": "请更新你的客户端版本",
-    "wait_update": "你的客户端版本高于服务器版本，请等待服务器更新",
+    "welcome": "Ani Dimension Server",
+    "update": "Por favor actualiza tu versión de cliente / Please update your client",
+    "wait_update": "Tu versión es más reciente que el servidor / Your client version is newer than the server",
     "stop": false,
-    "full": "服务器已爆满",
+    "full": "El servidor está lleno / Server is full",
     "max_rooms_count": 0,
-    "max_mem_percentage": 95,
+    "max_mem_percentage": 100,
     "side_timeout": false,
     "replay_delay": true,
     "hide_name": false,
@@ -35,8 +35,8 @@
       "::1/128"
     ],
     "i18n": {
-      "auto_pick": false,
-      "default": "zh-cn",
+      "auto_pick": true,
+      "default": "es-es",
       "fallback": "en-us",
       "map": {
         "CN": "zh-cn",
@@ -324,7 +324,7 @@
     "http": {
       "port": 7922,
       "websocket_roomlist": false,
-      "public_roomlist": false,
+      "public_roomlist": true,
       "show_ip": true,
       "show_info": true,
       "quick_death_rule": 2,

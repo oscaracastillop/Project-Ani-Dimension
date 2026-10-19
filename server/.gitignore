@@ -11,6 +11,7 @@ config.user.bak
 /bak
 /config
 /ygopro
+/ygopro-src
 /windbot
 /decks
 /decks_save*

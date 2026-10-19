@@ -427,6 +427,10 @@ bool MenuHandler::OnEvent(const irr::SEvent& event) {
 				mainGame->ebHostPort->setVisible(false);
 				mainGame->stHostNotes->setVisible(true);
 				mainGame->ebHostNotes->setVisible(true);
+				std::wstring nick = mainGame->ebNickNameOnline ? mainGame->ebNickNameOnline->getText() : L"";
+				if (nick.empty() && mainGame->ebNickName) nick = mainGame->ebNickName->getText();
+				if (nick.empty()) nick = L"Player";
+				mainGame->ebServerName->setText((L"Sala " + nick).c_str());
 				mainGame->ShowElement(mainGame->wCreateHost);
 				break;
 			}

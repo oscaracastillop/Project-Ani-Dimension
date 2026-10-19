@@ -172,9 +172,16 @@ void Game::Initialize() {
 	lpcFont = irr::gui::CGUITTFont::createTTFont(env, numfont, fallbackFonts);
 	if(!numFont || !adFont || !lpcFont)
 		throw std::runtime_error("Failed to load numbers font");
+	if(gGameConfig->skin.empty() || gGameConfig->skin == EPRO_TEXT("none") || gGameConfig->skin == NoSkinLabel()) {
+		gGameConfig->skin = EPRO_TEXT("Ani-Dimension");
+	}
 	if(!ApplySkin(gGameConfig->skin, false, true)) {
-		gGameConfig->skin = NoSkinLabel();
-		ApplySkin(gGameConfig->skin, false, true);
+		if(gGameConfig->skin != EPRO_TEXT("Ani-Dimension") && ApplySkin(EPRO_TEXT("Ani-Dimension"), false, true)) {
+			gGameConfig->skin = EPRO_TEXT("Ani-Dimension");
+		} else {
+			gGameConfig->skin = NoSkinLabel();
+			ApplySkin(gGameConfig->skin, false, true);
+		}
 	}
 	smgr = device->getSceneManager();
 	wCommitsLog = env->addWindow(Scale(0, 0, 500 + 10, 400 + 35 + 35), false, gDataManager->GetSysString(1209).data());
@@ -2112,6 +2119,16 @@ bool Game::MainLoop() {
 		ParseGithubRepositories(gRepoManager->GetReadyRepos());
 		if(ServerLobby::HasRefreshedRooms())
 			ServerLobby::FillOnlineRooms();
+		static uint32_t last_room_auto_refresh = 0;
+		if(wRoomListPlaceholder && wRoomListPlaceholder->isVisible()) {
+			auto now_ms = timer->getRealTime();
+			if(roomListTable && roomListTable->getSelected() < 0 && (now_ms - last_room_auto_refresh >= 5000)) {
+				last_room_auto_refresh = now_ms;
+				ServerLobby::RefreshRooms();
+			}
+		} else {
+			last_room_auto_refresh = timer->getRealTime();
+		}
 #ifdef YGOPRO_BUILD_DLL
 		if(!dInfo.isStarted) {
 			LoadCoreFromRepos();
@@ -4656,8 +4673,11 @@ void Game::SwitchMainView(int viewId) {
 	}
 
 	if (wTopBarMarquee) {
-		wTopBarMarquee->setVisible(true);
-		env->getRootGUIElement()->bringToFront(wTopBarMarquee);
+		bool showMarquee = (viewId == VIEW_LOBBY);
+		wTopBarMarquee->setVisible(showMarquee);
+		if (showMarquee) {
+			env->getRootGUIElement()->bringToFront(wTopBarMarquee);
+		}
 	}
 	if (wBtnSettings) wBtnSettings->setVisible(false);
 }
@@ -5266,7 +5286,20 @@ void Game::RepositionRanking() {
 }
 
 void Game::UpdateMarquee(float dt) {
-	if (!wTopBarMarquee || !wTopBarMarquee->isVisible() || !stMarqueeText)
+	if (!wTopBarMarquee || !stMarqueeText)
+		return;
+
+	// Marquee must ONLY appear in the Lobby interface.
+	// If in duel, deck builder, replay, or outside the main lobby, hide it immediately.
+	if (dInfo.isInDuel || is_building || currentMainView != VIEW_LOBBY || !wMainMenu || !wMainMenu->isVisible() ||
+	    (wHostPrepare && wHostPrepare->isVisible()) || (wLanWindow && wLanWindow->isVisible())) {
+		if (wTopBarMarquee->isVisible()) {
+			wTopBarMarquee->setVisible(false);
+		}
+		return;
+	}
+
+	if (!wTopBarMarquee->isVisible())
 		return;
 
 	// Marquee speed: ~45 pixels per second for a smooth, readable ticker

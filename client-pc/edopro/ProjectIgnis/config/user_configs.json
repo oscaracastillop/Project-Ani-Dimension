@@ -2,6 +2,14 @@
 	"repos": [
 	],
 	"urls": [
+		{
+			"url": "https://images.ygoprodeck.com/images/cards/{}.jpg",
+			"type": "pic"
+		},
+		{
+			"url": "https://images.ygoprodeck.com/images/cards_small/{}.jpg",
+			"type": "field"
+		}
 	],
 	"servers": [
 	]

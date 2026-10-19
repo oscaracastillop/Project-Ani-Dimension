@@ -17,3 +17,4 @@ client-android/.externalNativeBuild/
 *.log
 client-pc/edopro/ProjectIgnis/replay/*.yrp
 client-pc/edopro/ProjectIgnis/replay/*.yrpX
+scratch/

@@ -29,11 +29,11 @@
               ],
     "urls":  [
                  {
-                     "url":  "default",
+                     "url":  "https://images.ygoprodeck.com/images/cards/{}.jpg",
                      "type":  "pic"
                  },
                  {
-                     "url":  "default",
+                     "url":  "https://images.ygoprodeck.com/images/cards_small/{}.jpg",
                      "type":  "field"
                  },
                  {
@@ -47,14 +47,6 @@
                         "address":  "172.28.38.45",
                         "duelport":  7911,
                         "roomaddress":  "172.28.38.45",
-                        "roomlistprotocol":  "http",
-                        "roomlistport":  7922
-                    },
-                    {
-                        "name":  "Ani Dimension (Localhost)",
-                        "address":  "127.0.0.1",
-                        "duelport":  7911,
-                        "roomaddress":  "127.0.0.1",
                         "roomlistprotocol":  "http",
                         "roomlistport":  7922
                     }

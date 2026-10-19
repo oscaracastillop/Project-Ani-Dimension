@@ -17,7 +17,14 @@ src/main/assets/**
 !src/main/assets/filelist.txt
 !src/main/assets/index.txt
 !src/main/assets/cacert.pem
+!src/main/assets/defaults/
 !src/main/assets/defaults/config/
 !src/main/assets/defaults/config/**
+!src/main/assets/config/
+!src/main/assets/config/**
 !src/main/assets/defaults/textures/
 !src/main/assets/defaults/textures/**
+!src/main/assets/textures/
+!src/main/assets/textures/**
+!src/main/assets/defaults/skin/
+!src/main/assets/defaults/skin/**

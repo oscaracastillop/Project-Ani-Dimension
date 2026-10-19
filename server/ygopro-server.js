@@ -989,7 +989,7 @@
     }
     if (room = ROOM_find_by_name(name)) {
       return room;
-    } else if (memory_usage >= settings.modules.max_mem_percentage || (settings.modules.max_rooms_count && rooms_count >= settings.modules.max_rooms_count)) {
+    } else if (settings.modules.max_rooms_count && rooms_count >= settings.modules.max_rooms_count) {
       return null;
     } else {
       room = new Room(name);
@@ -1728,14 +1728,22 @@
         delete ROOM_connected_ip[client_prev_ip];
       }
     }
-    client.is_local = client.ip && (client.ip.includes('127.0.0.1') || client.ip.includes(real_windbot_server_ip));
+    var isPrivate = function(ip) {
+      if (!ip) return true;
+      if (ip.includes('127.0.0.1') || ip.includes('::1') || ip.includes('localhost')) return true;
+      if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+      if (ip.startsWith('10.') || ip.startsWith('192.168.') || ip.startsWith('169.254.')) return true;
+      if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true;
+      return false;
+    };
+    client.is_local = client.ip && (isPrivate(client.ip) || (real_windbot_server_ip && client.ip.includes(real_windbot_server_ip)));
     connect_count = ROOM_connected_ip[client.ip] || 0;
     if (!settings.modules.test_mode.no_connect_count_limit && !client.is_local && !isTrustedProxy(client.ip)) {
       connect_count++;
     }
     ROOM_connected_ip[client.ip] = connect_count;
     // log.info "connect", client.ip, ROOM_connected_ip[client.ip]
-    if (ROOM_bad_ip[client.ip] > 5 || ROOM_connected_ip[client.ip] > 10) {
+    if (!client.is_local && (ROOM_bad_ip[client.ip] > 5 || ROOM_connected_ip[client.ip] > 20)) {
       log.info('BAD IP', client.ip);
       client.destroy();
       return true;
@@ -1756,8 +1764,12 @@
   };
 
   global.rawSpawn = function(param) {
-    return spawn('./ygopro', param, {
-      cwd: 'ygopro'
+    var isWin = process.platform === 'win32';
+    var ygoproDir = path.resolve(__dirname, 'ygopro');
+    var exeName = isWin ? 'ygopro.exe' : './ygopro';
+    var exePath = isWin ? path.join(ygoproDir, exeName) : exeName;
+    return spawn(exePath, param, {
+      cwd: ygoproDir
     });
   };
 
@@ -2684,7 +2696,8 @@
     server = new net.Socket();
     client.server = server;
     server.client = client;
-    client.setTimeout(2000); //连接前超时2秒
+    client.setTimeout(30000); // 30s timeout before game connect
+    log.info('[NET] New connection from', client.physical_ip, client.ip);
     
     // 释放处理
     closeHandler = function(error) {
@@ -2727,36 +2740,38 @@
         });
       });
       client.on('timeout', function() {
+        log.warn('[NET] client timeout', client.name, client.ip);
         if (!(settings.modules.reconnect.enabled && (disconnect_list[CLIENT_get_authorize_key(client)] || client.had_new_reconnection))) {
           client.destroy();
         }
       });
     }
-    client.on('error', closeHandler);
+    client.on('error', function(err) {
+      log.warn('[NET] client error', client.name, err);
+      closeHandler(err);
+    });
     server.on('close', function(had_error) {
       var room;
+      log.info('[NET] server socket closed for client', server.client && server.client.name, 'had_error:', had_error);
       if (!server.isClosed) {
         server.isClosed = true;
       }
       if (!server.client) {
         return;
       }
-      //log.info "server isClosed", server.client.name, had_error
       room = ROOM_all[server.client.rid];
       if (room && !server.system_kicked && !server.had_new_reconnection) {
-        //log.info "server close", server.client.ip, ROOM_connected_ip[server.client.ip]
         room.disconnector = 'server';
       }
       if (!server.client.isClosed) {
         ygopro.stoc_send_chat(server.client, "${server_closed}", ygopro.constants.COLORS.RED);
-        //if room and settings.modules.replay_delay
-        //  room.send_replays()
         CLIENT_kick(server.client);
         SERVER_clear_disconnect(server);
       }
     });
     server.on('error', function(error) {
       var room;
+      log.warn('[NET] server socket error for client', server.client && server.client.name, error);
       server.isClosed = error;
       if (!server.client) {
         return;
@@ -2839,8 +2854,8 @@
         preconnect = false;
         if (settings.modules.reconnect.enabled && client.pre_reconnecting_to_room) {
           ctos_filter = ["UPDATE_DECK"];
-        } else if (client.name === null) {
-          ctos_filter = ["EXTERNAL_ADDRESS", "JOIN_GAME", "PLAYER_INFO"];
+        } else if (!client.name) {
+          ctos_filter = ["EXTERNAL_ADDRESS", "JOIN_GAME", "PLAYER_INFO", "CREATE_GAME"];
           preconnect = true;
         }
         handle_data = (await ygopro.helper.handleBuffer(ctos_buffer, "CTOS", ctos_filter, {
@@ -2867,9 +2882,19 @@
           ref1 = handle_data.datas;
           for (l = 0, len1 = ref1.length; l < len1; l++) {
             buffer = ref1[l];
+            if (buffer.length >= 5 && buffer.readUInt8(2) === 18) {
+              buffer.writeUInt16LE(0x1362, 3);
+            }
             await ygopro.helper.send(client.server, buffer);
           }
         } else {
+          if (handle_data && handle_data.datas) {
+            handle_data.datas.forEach(function(buf) {
+              if (buf && buf.length >= 5 && buf.readUInt8(2) === 18) {
+                buf.writeUInt16LE(0x1362, 3);
+              }
+            });
+          }
           client.pre_establish_buffers = client.pre_establish_buffers.concat(handle_data.datas);
         }
       }
@@ -2996,6 +3021,51 @@
     return false;
   });
 
+  ygopro.ctos_follow('CREATE_GAME', true, async function(buffer, info, client, server, datas) {
+    if (!client.name || client.name === "") {
+      ygopro.stoc_die(client, "${bad_user_name}");
+      return;
+    }
+    var roomName = (client.name || 'Duel') + '#' + Math.floor(Math.random() * 10000);
+    if (info && info.name && typeof info.name === 'string' && info.name.trim().length > 0) {
+      roomName = info.name.trim();
+    } else if (buffer && buffer.length >= 60) {
+      try {
+        // In EDOPro, CTOS_CreateGame contains UTF-16LE room name after HostInfo
+        for (var offset = 20; offset <= 80; offset += 4) {
+          if (offset + 40 <= buffer.length) {
+            var candidate = buffer.slice(offset, offset + 40).toString('utf16le').replace(/\0/g, '').trim();
+            if (candidate && candidate.length > 0 && candidate.length <= 20 && /^[\w\s\.\:\-\#\@\!]+$/.test(candidate)) {
+              roomName = candidate;
+              break;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    var room = (await ROOM_find_or_create_by_name(roomName, client.ip));
+    if (!room) {
+      ygopro.stoc_die(client, settings.modules.full);
+    } else if (room.error) {
+      ygopro.stoc_die(client, room.error);
+    } else {
+      var playerInfoPkt = Buffer.alloc(43);
+      playerInfoPkt.writeUInt16LE(41, 0);
+      playerInfoPkt.writeUInt8(0x10, 2);
+      Buffer.from(client.name || 'Admin', 'utf16le').copy(playerInfoPkt, 3);
+
+      var joinPkt = Buffer.alloc(51);
+      joinPkt.writeUInt16LE(49, 0);
+      joinPkt.writeUInt8(0x12, 2);
+      joinPkt.writeUInt16LE(0x1362, 3);
+      joinPkt.writeUInt32LE(0, 7);
+
+      client.pre_establish_buffers = [playerInfoPkt, joinPkt];
+      room.join_player(client);
+      return '_cancel';
+    }
+  });
+
   ygopro.ctos_follow('JOIN_GAME', true, async function(buffer, info, client, server, datas) {
     var available_logs, check_buffer_indentity, check_version, create_room_name, create_room_with_action, decrypted_buffer, duelLog, e, exactBan, index, j, l, len, len1, len2, m, matching_match, matching_participant, polyfill_version, possible_id, possible_ids, pre_room, recover_match, replay, replay_id, replays, room, struct, tournament_data, try_decrypt_buffer_with_id, userData, userDataRes, userUrl;
     check_version = async function() {
@@ -3013,20 +3083,9 @@
       clean_blocker = function() {
         return aragami.del(aragami_classes.ClientVersionBlocker, client_key);
       };
-      if (info.version === settings.version) {
+      if (info.version === settings.version || settings.alternative_versions.includes(info.version)) {
         await clean_blocker();
         return true;
-      }
-      if (settings.alternative_versions.includes(info.version)) {
-        if (!(await aragami.has(aragami_classes.ClientVersionBlocker, client_key))) {
-          blocker_obj = new aragami_classes.ClientVersionBlocker();
-          blocker_obj.clientKey = client_key;
-          await aragami.set(blocker_obj);
-          return bad_version("${version_to_polyfill}");
-        } else {
-          await clean_blocker();
-          return true;
-        }
       }
       return bad_version(info.version < settings.version ? settings.modules.update : settings.modules.wait_update);
     };
@@ -3046,8 +3105,8 @@
         ygopro.stoc_send_chat(client, "${version_polyfilled}", ygopro.constants.COLORS.BABYBLUE);
       }
     };
-    //log.info info
-    info.pass = info.pass.trim();
+    info = info || {};
+    info.pass = (info.pass ? info.pass.trim() : "");
     client.pass = info.pass;
     if (CLIENT_is_able_to_reconnect(client) || CLIENT_is_able_to_kick_reconnect(client)) {
       CLIENT_pre_reconnect(client);
@@ -3437,7 +3496,7 @@
     } else if (!client.name || client.name === "") {
       ygopro.stoc_die(client, "${bad_user_name}");
       return;
-    } else if (ROOM_connected_ip[client.ip] > 5) {
+    } else if (!client.is_local && ROOM_connected_ip[client.ip] > 20) {
       log.warn("MULTI LOGIN", client.name, client.ip);
       ygopro.stoc_die(client, "${too_much_connection}" + client.ip);
       return;
@@ -3458,13 +3517,73 @@
       return;
     } else {
       await polyfill_version();
-      //log.info 'join_game',info.pass, client.name
-      room = (await ROOM_find_or_create_by_name(info.pass, client.ip));
+      var gameid = (info && info.gameid) || (buffer && buffer.length >= 8 ? (buffer.readUInt32LE(4) || buffer.readUInt32LE(2)) : 0);
+      var targetRoom = null;
+      var candidatePid = gameid || (info && info.gameid);
+      if (candidatePid && candidatePid > 0) {
+        if (typeof ROOM_find_by_pid === 'function') {
+          targetRoom = ROOM_find_by_pid(candidatePid) || ROOM_find_by_pid(Number(candidatePid));
+        }
+        if (!targetRoom && typeof ROOM_find_by_port === 'function') {
+          targetRoom = ROOM_find_by_port(candidatePid) || ROOM_find_by_port(Number(candidatePid));
+        }
+        if (!targetRoom && Array.isArray(ROOM_all)) {
+          targetRoom = ROOM_all.find(function(r) {
+            return r && (r.process_pid == candidatePid || r.port == candidatePid || r.id == candidatePid);
+          });
+        }
+      }
+      if (targetRoom) {
+        room = targetRoom;
+      } else if (info.pass && info.pass.length > 0) {
+        if (!ROOM_validate(info.pass)) {
+          ygopro.stoc_die(client, "${invalid_password_room}");
+          return;
+        }
+        room = (await ROOM_find_or_create_by_name(info.pass, client.ip));
+      } else {
+        if (Array.isArray(ROOM_all)) {
+          room = ROOM_all.find(function(r) {
+            return r && r.established && r.duel_stage === ygopro.constants.DUEL_STAGE.BEGIN && r.players && r.players.length < (r.hostinfo && r.hostinfo.mode === 2 ? 4 : 2) && (!r.name || r.name.indexOf('$') === -1);
+          });
+        }
+        if (!room) {
+          room = (await ROOM_find_or_create_by_name(info.pass, client.ip));
+        }
+      }
+      if (room && room.name && room.name.indexOf('$') !== -1) {
+        var expectedPass = room.name.split('$')[1];
+        if (info.pass !== expectedPass) {
+          ygopro.stoc_die(client, "${invalid_password}");
+          return;
+        }
+      }
+      var maxPlayers = (room && room.hostinfo && room.hostinfo.mode === 2) ? 4 : 2;
+      if (room && room.players && room.players.length >= maxPlayers && room.hostinfo && room.hostinfo.no_watch) {
+        ygopro.stoc_die(client, "${watch_denied_room}");
+        return;
+      }
       if (!room) {
         ygopro.stoc_die(client, settings.modules.full);
       } else if (room.error) {
         ygopro.stoc_die(client, room.error);
       } else {
+        // Ensure playerInfo is present in pre_establish_buffers
+        client.pre_establish_buffers = client.pre_establish_buffers || [];
+        var hasPlayerInfo = client.pre_establish_buffers.some(function(b) {
+          return b && b.length >= 3 && b.readUInt8(2) === 0x10;
+        });
+        if (!hasPlayerInfo) {
+          var playerInfoPkt = Buffer.alloc(43);
+          playerInfoPkt.writeUInt16LE(41, 0);
+          playerInfoPkt.writeUInt8(0x10, 2);
+          Buffer.from(client.name || 'Player', 'utf16le').copy(playerInfoPkt, 3);
+          client.pre_establish_buffers.unshift(playerInfoPkt);
+        }
+        // Remove any old/duplicate JOIN_GAME (0x12) from pre_establish_buffers so only the current real packet is sent
+        client.pre_establish_buffers = client.pre_establish_buffers.filter(function(b) {
+          return !b || b.length < 3 || b.readUInt8(2) !== 0x12;
+        });
         room.join_player(client);
       }
     }
@@ -3529,7 +3648,7 @@
           name: "Marshtomp"
         });
         ygopro.ctos_send(recorder, 'JOIN_GAME', {
-          version: settings.version,
+          version: 0x1362,
           pass: "Marshtomp"
         });
         ygopro.ctos_send(recorder, 'HS_TOOBSERVER');
@@ -3549,7 +3668,7 @@
           name: "the Big Brother"
         });
         ygopro.ctos_send(watcher, 'JOIN_GAME', {
-          version: settings.version,
+          version: 0x1362,
           pass: "the Big Brother"
         });
         ygopro.ctos_send(watcher, 'HS_TOOBSERVER');

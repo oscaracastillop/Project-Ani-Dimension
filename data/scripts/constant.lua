@@ -1,3 +1,35 @@
+if not Duel then Duel = {} end
+if not Duel.LoadScript then
+	local _loaded_scripts = {}
+	Duel.LoadScript = function(filename)
+		if _loaded_scripts[filename] then return true end
+		local search_dirs = {
+			"./script/",
+			"./script/official/",
+			"./script/unofficial/",
+			"./script/skill/",
+			"./script/rush/",
+			"./script/goat/",
+			"./script/pre-errata/",
+			"./script/pre-release/",
+			""
+		}
+		for _, dir in ipairs(search_dirs) do
+			local path = dir .. filename
+			local f, err = loadfile(path)
+			if f then
+				_loaded_scripts[filename] = true
+				local ok, res = pcall(f)
+				if not ok and Debug and Debug.Message then
+					Debug.Message("Error loading " .. path .. ": " .. tostring(res))
+				end
+				return res
+			end
+		end
+		return nil
+	end
+end
+
 --Locations
 LOCATION_DECK    = 0x1
 LOCATION_HAND    = 0x2
