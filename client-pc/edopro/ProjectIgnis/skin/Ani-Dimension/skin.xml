@@ -150,17 +150,17 @@
 	</Custom>
 
 	<Button texture="button.png">
-		<SrcBorder tlx="8" tly="8" brx="8" bry="8" />
-		<DstBorder tlx="8" tly="8" brx="8" bry="8" />
+		<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+		<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 		<Color a="255" r="255" g="255" b="255" />
 		<Pressed texture="ButtonPressed.png">
-			<SrcBorder tlx="8" tly="8" brx="8" bry="8" />
-			<DstBorder tlx="8" tly="8" brx="8" bry="8" />
+			<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+			<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 			<Color a="255" r="255" g="255" b="255" />
 		</Pressed>
 		<ButtonDisabled texture="ButtonDisabled.png">
-			<SrcBorder tlx="8" tly="8" brx="8" bry="8" />
-			<DstBorder tlx="8" tly="8" brx="8" bry="8" />
+			<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+			<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 			<Color a="255" r="255" g="255" b="255" />
 		</ButtonDisabled>
 	</Button>
@@ -204,30 +204,30 @@
 	</ComboBox>
 
 	<SunkenPane texture="sunkenpane.png">
-		<SrcBorder tlx="3" tly="3" brx="3" bry="3" />
-		<DstBorder tlx="3" tly="3" brx="3" bry="3" />
+		<SrcBorder tlx="2" tly="2" brx="2" bry="2" />
+		<DstBorder tlx="2" tly="2" brx="2" bry="2" />
 		<Color a="255" r="255" g="255" b="255" />
 	</SunkenPane>
 
 	<TabControl texture="TabControl.png">
-		<SrcBorder tlx="10" tly="10" brx="10" bry="10" />
-		<DstBorder tlx="10" tly="10" brx="10" bry="10" />
+		<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+		<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 		<Color a="255" r="255" g="255" b="255" />
 		<TabButton texture="TabButton.png">
-			<SrcBorder tlx="6" tly="6" brx="2" bry="6" />
-			<DstBorder tlx="6" tly="6" brx="2" bry="6" />
+			<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+			<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 			<Color a="255" r="255" g="255" b="255" />
 		</TabButton>
 		<TabButtonPressed texture="TabButtonPressed.png">
-			<SrcBorder tlx="6" tly="6" brx="2" bry="6" />
-			<DstBorder tlx="6" tly="6" brx="2" bry="6" />
+			<SrcBorder tlx="4" tly="4" brx="4" bry="4" />
+			<DstBorder tlx="4" tly="4" brx="4" bry="4" />
 			<Color a="255" r="255" g="255" b="255" />
 		</TabButtonPressed>
 	</TabControl>
 
 	<Window texture="windowbg.png">
-		<SrcBorder tlx="34" tly="14" brx="14" bry="14" />
-		<DstBorder tlx="34" tly="14" brx="14" bry="14" />
+		<SrcBorder tlx="4" tly="29" brx="4" bry="4" />
+		<DstBorder tlx="4" tly="29" brx="4" bry="4" />
 		<Color a="255" r="255" g="255" b="255" />
 	</Window>
 

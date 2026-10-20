@@ -5,11 +5,11 @@
   "alternative_versions": [4945, 4948, 4962, 4944],
   "hostinfo": {
     "lflist": 0,
-    "rule": 0,
+    "rule": 5,
     "mode": 0,
     "comment": "rule: 0=OCG-ONLY, 1=TCG-ONLY, 2=SC-ONLY, 3=CUSTOM-ONLY, 4=NO-UNIQUE, 5=ALL; mode: 0=SINGLE, 1=MATCH, 2=TAG",
     "duel_rule": 5,
-    "no_check_deck": false,
+    "no_check_deck": true,
     "no_shuffle_deck": false,
     "start_lp": 8000,
     "start_hand": 5,

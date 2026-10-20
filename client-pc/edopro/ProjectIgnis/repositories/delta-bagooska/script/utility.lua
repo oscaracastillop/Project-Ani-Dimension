@@ -957,7 +957,10 @@ Card.RegisterEffect=(function()
 		if not reg_e or reg_e<=0 then return reg_e end
 		local prop=EFFECT_FLAG_CANNOT_DISABLE|EFFECT_FLAG_IGNORE_IMMUNE|EFFECT_FLAG_SET_AVAILABLE
 		if e:IsHasProperty(EFFECT_FLAG_UNCOPYABLE) then prop=prop|EFFECT_FLAG_UNCOPYABLE end
-		local resetflag,resetcount=e:GetReset()
+		local resetflag,resetcount
+		if e.GetReset then
+			resetflag,resetcount=e:GetReset()
+		end
 		for _,code in ipairs({...}) do
 			local e2=Effect.CreateEffect(c)
 			e2:SetType(EFFECT_TYPE_SINGLE)
@@ -2964,16 +2967,6 @@ function Auxiliary.LimitParams(f,n)
 		return f(table.unpack({...},1,to_unpack))
 	end
 end
-
-function Auxiliary.popcount(value)
-	local count=0
-	while value>0 do
-		value=value&(value-1)
-		count=count+1
-	end
-	return count
-end
-
 
 Duel.LoadScript("debug_utility.lua")
 Duel.LoadScript("chain.lua")
